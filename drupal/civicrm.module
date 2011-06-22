@@ -332,6 +332,9 @@ function civicrm_initialize( )
             drupal_add_js($path . '/filter.js');
             drupal_add_css($path . '/filter.css');
         }
+
+        //Load the Preferences related to Accessability Implementation        
+        CRM_Core_BAO_Preferences::variableLoad();
     }
 
     return true;

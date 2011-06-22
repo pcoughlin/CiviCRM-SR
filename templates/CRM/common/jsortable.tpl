@@ -23,6 +23,7 @@
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
 *}
+{php} echo '<script type="text/javascript"> var Screen_Reader='.CRM_Core_BAO_Preferences::variableGet("Screen_Reader").'; </script>'; {/php}
 {literal}
 <script type="text/javascript">
 cj( function( ) {
@@ -74,8 +75,15 @@ eval('tableId =[' + tableId + ']');
                 if ( cj(this).attr('class') == 'sortable' ){
                     sortColumn += '[' + count + ', "asc" ],';
                 }
-                sortId   = getRowId(tdObject, cj(this).attr('id') +' hiddenElement' ); 
+                sortId   = getRowId(tdObject, cj(this).attr('id') +' hiddenElement' );
+
+                 //Dhaval: Added this if loop to display the arrows based on visually impaired profile param
+                if(Screen_Reader){
+                columns += '{"sType": "html"},';
+                }else{
                 columns += '{ "sType": \'' + stype + '\', "fnRender": function (oObj) { return oObj.aData[' + sortId + ']; },"bUseRendered": false},';
+                } 
+
             break;
             case 'nosort':           
                 columns += '{ "bSortable": false, "sClass": "'+ getElementClass( this ) +'"},';
