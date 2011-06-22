@@ -33,7 +33,7 @@
  * @package CiviCRM_APIv2
  * @subpackage API_Contact
  * @copyright CiviCRM LLC (c) 2004-2011
- * $Id: Contact.php 33093 2011-03-16 10:42:29Z shot $
+ * $Id: Contact.php 34863 2011-06-14 10:30:41Z deepak $
  *
  */
 
@@ -533,13 +533,19 @@ function &civicrm_contact_search( &$params )
  * @param boolean $dupeCheck       Should we check for duplicate contacts
  * @param boolean $dupeErrorArray  Should we return values of error
  *                                 object in array foramt
- * @param boolean $requiredCHeck   Should we check if required params
+ * @param boolean $requiredCheck   Should we check if required params
  *                                 are present in params array
+ * @param int   $dedupeRuleGroupID - the dedupe rule ID to use if present
  *
  * @return null on success, error message otherwise
  * @access public
  */
-function civicrm_contact_check_params( &$params, $dupeCheck = true, $dupeErrorArray = false, $requiredCheck = true )
+function civicrm_contact_check_params( &$params,
+                                       $dupeCheck = true,
+                                       $dupeErrorArray = false,
+                                       $requiredCheck = true,
+                                       $dedupeRuleGroupID = null
+                                       )
 {
     if ( $requiredCheck ) {
         $required = array(
@@ -618,7 +624,12 @@ function civicrm_contact_check_params( &$params, $dupeCheck = true, $dupeErrorAr
             $dedupeParams['check_permission'] = $fields['check_permission'];
         }
 
-        $ids = implode(',', CRM_Dedupe_Finder::dupesByParams($dedupeParams, $params['contact_type']));
+        $ids = implode(',',
+                       CRM_Dedupe_Finder::dupesByParams($dedupeParams,
+                                                        $params['contact_type'],
+                                                        'Strict',
+                                                        array( ),
+                                                        $dedupeRuleGroupID ) );
         
         if ( $ids != null ) {
             if ( $dupeErrorArray ) {
@@ -628,7 +639,7 @@ function civicrm_contact_check_params( &$params, $dupeCheck = true, $dupeErrorAr
                 return civicrm_create_error( $error->pop( ) );
             }
             
-            return civicrm_create_error( "Found matching contacts: $ids", $ids );
+            return civicrm_create_error( "Found matching contacts: $ids", array( $ids ) );
         }
     }
 

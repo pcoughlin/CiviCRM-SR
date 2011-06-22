@@ -84,6 +84,8 @@ DROP TABLE IF EXISTS civicrm_mailing_job;
 DROP TABLE IF EXISTS civicrm_mailing_trackable_url;
 DROP TABLE IF EXISTS civicrm_mailing_group;
 DROP TABLE IF EXISTS civicrm_mailing;
+DROP TABLE IF EXISTS civicrm_action_log;
+DROP TABLE IF EXISTS civicrm_action_schedule;
 DROP TABLE IF EXISTS civicrm_uf_join;
 DROP TABLE IF EXISTS civicrm_uf_field;
 DROP TABLE IF EXISTS civicrm_uf_group;
@@ -169,6 +171,7 @@ DROP TABLE IF EXISTS civicrm_acl_contact_cache;
 DROP TABLE IF EXISTS civicrm_contact;
 DROP TABLE IF EXISTS civicrm_acl_entity_role;
 DROP TABLE IF EXISTS civicrm_acl;
+DROP TABLE IF EXISTS civicrm_action_mapping;
 DROP TABLE IF EXISTS civicrm_prevnext_cache;
 DROP TABLE IF EXISTS civicrm_persistent;
 DROP TABLE IF EXISTS civicrm_discount;
@@ -684,6 +687,32 @@ CREATE TABLE civicrm_prevnext_cache (
      entity_id2 int unsigned NOT NULL   COMMENT 'FK to entity table specified in entity_table column.',
      cacheKey varchar(255)    COMMENT 'Unique path name for cache element of the searched item',
      data longtext    COMMENT 'cached snapshot of the serialized data' 
+,
+    PRIMARY KEY ( id )
+ 
+ 
+ 
+)  ENGINE=InnoDB DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci  ;
+
+-- /*******************************************************
+-- *
+-- * civicrm_action_mapping
+-- *
+-- * Table to store mapping for the reminder.
+-- *
+-- *******************************************************/
+CREATE TABLE civicrm_action_mapping (
+
+
+     id int unsigned NOT NULL AUTO_INCREMENT  ,
+     entity varchar(64)    COMMENT 'Entity for which the reminder is created',
+     entity_value varchar(64)    COMMENT 'Entity value',
+     entity_value_label varchar(64)    COMMENT 'Entity value label',
+     entity_status varchar(64)    COMMENT 'Entity status',
+     entity_status_label varchar(64)    COMMENT 'Entity status label',
+     entity_date_start varchar(64)    COMMENT 'Entity date',
+     entity_date_end varchar(64)    COMMENT 'Entity date',
+     entity_recipient varchar(64)    COMMENT 'Entity recipient' 
 ,
     PRIMARY KEY ( id )
  
@@ -1952,8 +1981,8 @@ CREATE TABLE civicrm_custom_field (
      is_view tinyint    COMMENT 'Is this property set by PHP Code? A code field is viewable but not editable',
      options_per_line int unsigned    COMMENT 'number of options per line for checkbox and radio',
      text_length int unsigned    COMMENT 'field length if alphanumeric',
-     start_date_years int unsigned    COMMENT 'Date may be up to start_date_years years prior to tcurrent date  ',
-     end_date_years int unsigned    COMMENT 'Date may be up to end_date_years years after to tcurrent date ',
+     start_date_years int    COMMENT 'Date may be up to start_date_years years prior to the current date.',
+     end_date_years int    COMMENT 'Date may be up to end_date_years years after the current date.',
      date_format varchar(64)    COMMENT 'date format for custom date',
      time_format int unsigned    COMMENT 'time format for custom date',
      note_columns int unsigned    COMMENT ' Number of columns in Note Field ',
@@ -2363,6 +2392,7 @@ CREATE TABLE civicrm_phone (
      is_billing tinyint   DEFAULT 0 COMMENT 'Is this the billing?',
      mobile_provider_id int unsigned    COMMENT 'Which Mobile Provider does this phone belong to.',
      phone varchar(32)    COMMENT 'Complete phone number.',
+     phone_ext varchar(16)    COMMENT 'Optional extension for a phone number.',
      phone_type_id int unsigned    COMMENT 'Which type of phone does this number belongs.' 
 ,
     PRIMARY KEY ( id )
@@ -3481,6 +3511,80 @@ CREATE TABLE civicrm_uf_join (
   
 ,      
      CONSTRAINT FK_civicrm_uf_join_uf_group_id FOREIGN KEY (uf_group_id) REFERENCES civicrm_uf_group(id)   
+)  ENGINE=InnoDB DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci  ;
+
+-- /*******************************************************
+-- *
+-- * civicrm_action_schedule
+-- *
+-- * Table to store the reminders.
+-- *
+-- *******************************************************/
+CREATE TABLE civicrm_action_schedule (
+
+
+     id int unsigned NOT NULL AUTO_INCREMENT  ,
+     name varchar(64)    COMMENT 'Name of the action(reminder)',
+     title varchar(64)    COMMENT 'Title of the action(reminder)',
+     recipient varchar(64)    COMMENT 'Recipient',
+     entity_value varchar(64)    COMMENT 'Entity value',
+     entity_status varchar(64)    COMMENT 'Entity status',
+     start_action_offset int unsigned    COMMENT 'Reminder Interval.',
+     start_action_unit enum('hour', 'day', 'week', 'month', 'year')    COMMENT 'Time units for reminder.',
+     start_action_condition varchar(32)    COMMENT 'Reminder Action',
+     start_action_date varchar(64)    COMMENT 'Entity date',
+     is_repeat tinyint   DEFAULT 0 ,
+     repetition_frequency_unit enum('hour', 'day', 'week', 'month', 'year')    COMMENT 'Time units for repetition of reminder.',
+     repetition_frequency_interval int unsigned    COMMENT 'Time interval for repeating the reminder.',
+     end_frequency_unit enum('hour', 'day', 'week', 'month', 'year')    COMMENT 'Time units till repetition of reminder.',
+     end_frequency_interval int unsigned    COMMENT 'Time interval till repeating the reminder.',
+     end_action varchar(32)    COMMENT 'Reminder Action till repeating the reminder.',
+     end_date varchar(64)    COMMENT 'Entity end date',
+     is_active tinyint   DEFAULT 1 COMMENT 'Is this option active?',
+     recipient_manual varchar(128)    COMMENT 'Contact IDs to which reminder should be sent.',
+     body_text longtext    COMMENT 'Body of the mailing in text format.',
+     body_html longtext    COMMENT 'Body of the mailing in html format.',
+     subject varchar(128)    COMMENT 'Subject of mailing',
+     record_activity tinyint   DEFAULT NULL COMMENT 'Record Activity for this reminder?',
+     mapping_id int unsigned    COMMENT 'FK to mapping which is being used by this reminder',
+     group_id int unsigned    COMMENT 'FK to Group',
+     msg_template_id int unsigned    COMMENT 'FK to the message template.' 
+,
+    PRIMARY KEY ( id )
+ 
+ 
+,      
+     CONSTRAINT FK_civicrm_action_schedule_mapping_id FOREIGN KEY (mapping_id) REFERENCES civicrm_action_mapping(id) ON DELETE SET NULL,      
+     CONSTRAINT FK_civicrm_action_schedule_group_id FOREIGN KEY (group_id) REFERENCES civicrm_group(id) ON DELETE SET NULL,      
+     CONSTRAINT FK_civicrm_action_schedule_msg_template_id FOREIGN KEY (msg_template_id) REFERENCES civicrm_msg_template(id) ON DELETE SET NULL  
+)  ENGINE=InnoDB DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci  ;
+
+-- /*******************************************************
+-- *
+-- * civicrm_action_log
+-- *
+-- * Table to store log for the reminder.
+-- *
+-- *******************************************************/
+CREATE TABLE civicrm_action_log (
+
+
+     id int unsigned NOT NULL AUTO_INCREMENT  ,
+     contact_id int unsigned    COMMENT 'FK to Contact ID',
+     entity_id int unsigned NOT NULL   COMMENT 'FK to id of the entity that the action was performed on. Pseudo - FK.',
+     entity_table varchar(255)    COMMENT 'name of the entity table for the above id, e.g. civicrm_activity, civicrm_participant',
+     action_schedule_id int unsigned NOT NULL   COMMENT 'FK to the action schedule that this action originated from.',
+     action_date_time datetime    COMMENT 'date time that the action was performed on.',
+     is_error tinyint   DEFAULT 0 COMMENT 'Was there any error sending the reminder?',
+     message text    COMMENT 'Description / text in case there was an error encountered.',
+     repetition_number int unsigned NOT NULL   COMMENT 'Keeps track of the sequence number of this repetition.' 
+,
+    PRIMARY KEY ( id )
+ 
+ 
+,      
+     CONSTRAINT FK_civicrm_action_log_contact_id FOREIGN KEY (contact_id) REFERENCES civicrm_contact(id) ON DELETE CASCADE,      
+     CONSTRAINT FK_civicrm_action_log_action_schedule_id FOREIGN KEY (action_schedule_id) REFERENCES civicrm_action_schedule(id) ON DELETE CASCADE  
 )  ENGINE=InnoDB DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci  ;
 
 -- /*******************************************************

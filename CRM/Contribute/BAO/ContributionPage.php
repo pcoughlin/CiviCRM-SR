@@ -111,8 +111,8 @@ class CRM_Contribute_BAO_ContributionPage extends CRM_Contribute_DAO_Contributio
      * @access public
      * @static
      */
-    static function sendMail( $contactID, &$values, $isTest = false, $returnMessageText = false ) 
-    { 
+    static function sendMail( $contactID, &$values, $isTest = false, $returnMessageText = false, $fieldTypes = null ) 
+    {
         require_once "CRM/Core/BAO/UFField.php";
         $gIds = array( );
         $params = array( );
@@ -136,6 +136,14 @@ class CRM_Contribute_BAO_ContributionPage extends CRM_Contribute_DAO_Contributio
             }
             
             $gIds['custom_post_id'] = $values['custom_post_id'];
+        }
+        
+        if ( CRM_Utils_Array::value( 'is_for_organization', $values ) ) {
+            if ( CRM_Utils_Array::value( 'membership_id', $values ) ) {
+                $params['onbehalf_profile'] = array( array( 'membership_id', '=', $values['membership_id'], 0, 0 ) );
+            } else if ( CRM_Utils_Array::value( 'contribution_id', $values ) ) {
+                $params['onbehalf_profile'] = array( array( 'contribution_id', '=', $values['contribution_id'], 0, 0 ) ); 
+            }
         }
         
         //check whether it is a test drive
@@ -266,6 +274,10 @@ class CRM_Contribute_BAO_ContributionPage extends CRM_Contribute_DAO_Contributio
 
                 $tplParams['onBehalfName']  = $displayName;
                 $tplParams['onBehalfEmail'] = $email;
+
+                $profileId = CRM_Core_DAO::getFieldValue( 'CRM_Core_DAO_UFGroup', 'on_behalf_organization', 'id', 'name' );
+                self::buildCustomDisplay( $profileId, 'onBehalfProfile' , $userID, $template,
+                                          $params['onbehalf_profile'], $fieldTypes );
             }
             
             // use either the contribution or membership receipt, based on whether it’s a membership-related contrib or not
@@ -400,21 +412,26 @@ class CRM_Contribute_BAO_ContributionPage extends CRM_Contribute_DAO_Contributio
      * @access public
      * @static  
      */ 
-    function buildCustomDisplay( $gid, $name, $cid, &$template, &$params ) 
+    function buildCustomDisplay( $gid, $name, $cid, &$template, &$params, $fieldTypes = null ) 
     {
         if ( $gid ) {
             require_once 'CRM/Core/BAO/UFGroup.php';
             if ( CRM_Core_BAO_UFGroup::filterUFGroups($gid, $cid) ){
                 $values = array( );
                 $groupTitle = null;
-                $fields = CRM_Core_BAO_UFGroup::getFields( $gid, false, CRM_Core_Action::VIEW );
-
+                $fields = CRM_Core_BAO_UFGroup::getFields( $gid, false, CRM_Core_Action::VIEW, null, null, false,
+                                                           null, false, null, CRM_Core_Permission::CREATE, null );
                 foreach ( $fields as $k => $v  ) {
                     if ( ! $groupTitle ) { 
                         $groupTitle = $v["groupTitle"];
                     }
                     // suppress all file fields from display
                     if ( CRM_Utils_Array::value( 'data_type', $v, '' ) == 'File' || CRM_Utils_Array::value( 'name', $v, '' ) == 'image_URL' ) {
+                        unset( $fields[$k] );
+                    }
+
+                    if ( !empty( $fieldTypes ) &&
+                         ( !in_array( $v['field_type'], $fieldTypes ) ) ) {
                         unset( $fields[$k] );
                     }
                 }
