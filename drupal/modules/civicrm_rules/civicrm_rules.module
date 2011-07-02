@@ -48,7 +48,7 @@ function civicrm_rules_civicrm_post( $op, $objectName, $objectId, &$objectRef ) 
     }
 
 	// process only contacts for now
-	$validObjects = variable_get('civicrm_rules_post_entities','Contact');
+	$validObjects = variable_get('civicrm_rules_post_entities',array('Contact'));
 
 	if ( ! in_array( $objectName, $validObjects ) ) {
 		return;
@@ -179,7 +179,7 @@ function civicrm_rules_perm()
 
 function civicrm_rules_menu() {
 
-    $items['admin/settings/civicrm_rules'] = array(
+    $items['admin/config/civicrm/rules'] = array(
                                                    'title' => t('CiviCRM Rules settings'),
                                                    'description' => t('CiviCRM Rules Configuration'),
                                                    'page callback' => 'drupal_get_form',
