@@ -62,7 +62,7 @@
 <div class="crm-accordion-wrapper crm-accordion-email-signature crm-accordion_title-accordion crm-accordion-closed">
  <div class="crm-accordion-header">
   <div class="icon crm-accordion-pointer"></div> 
-{ts}<a href="#">Signature</a>{/ts} 
+<a href="#">{ts}Signature{/ts}</a> 
   </div><!-- /.crm-accordion-header -->
   <div id="signatureBlock{$blockId}" class="crm-accordion-body">
             {$form.email.$blockId.signature_html.label}<br />{$form.email.$blockId.signature_html.html}<br />

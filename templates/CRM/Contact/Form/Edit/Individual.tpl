@@ -54,7 +54,7 @@ var checkSimilar =  {$checkSimilar};
              msg = msg + "{/literal}{ts}There is a contact with a similar last name. If the person you were trying to add is listed below, click on their name to view or edit their record{/ts}{literal}";  
            } else {
              // ideally, should use a merge with data.length
-             msg = msg + "{/literal}{ts}There are "+data.length+" contacts with a similar last name(<a href='#' onclick='cj(\"#lastname_msg\").remove();cj(\"#current_employer\").focus();'>Click here</a> to Skip and move to next form field). If the person you were trying to add is listed below, click on their name to view or edit their record{/ts}{literal}";
+             msg = msg + "{/literal}{ts}There are "+data.length+" contacts with a similar last name({/ts}<a href='#' onclick='cj(\"#lastname_msg\").remove();cj(\"#current_employer\").focus();'>{ts}Click here{/ts}</a> {ts}to Skip and move to next form field). If the person you were trying to add is listed below, click on their name to view or edit their record{/ts}{literal}";
            }
            msg = msg+ '<table class="matching-contacts-actions">';
            cj.each(data, function(i,contact){

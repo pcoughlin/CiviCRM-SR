@@ -3139,3 +3139,7 @@ div#crm-toolTip
     position: static;
     z-index: -100;
 }
+
+#crm-container a.whiteanchor{
+  color:white;
+}
