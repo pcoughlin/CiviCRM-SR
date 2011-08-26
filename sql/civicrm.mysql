@@ -4594,4 +4594,4 @@ CREATE TABLE civicrm_pledge_payment (
      CONSTRAINT FK_civicrm_pledge_payment_contribution_id FOREIGN KEY (contribution_id) REFERENCES civicrm_contribution(id) ON DELETE CASCADE  
 )  ENGINE=InnoDB DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci  ;
 
- 
+ ALTER TABLE `civicrm_preferences` ADD COLUMN `variables` TEXT COMMENT ' User Preference Variables Array' AFTER `contact_autocomplete_options`;

@@ -3146,3 +3146,8 @@ div#crm-toolTip
     position: static;
     z-index: -100;
 }
+
+/*Screen Reader Accessibility additions*/
+#crm-container a.whiteanchor{
+  color:white;
+}
