@@ -54,6 +54,7 @@ class CRM_Contribute_Form_Contribution_Main extends CRM_Contribute_Form_Contribu
 
     protected $_defaults;
 
+    public $_membershipTypeValues;
     /** 
      * Function to set variables up before form is built 
      *                                                           
@@ -67,6 +68,7 @@ class CRM_Contribute_Form_Contribution_Main extends CRM_Contribute_Form_Contribu
         // make sure we have right permission to edit this user
         $csContactID = CRM_Utils_Request::retrieve( 'cid', 'Positive', $this, false, $this->_userID );
         $reset       = CRM_Utils_Request::retrieve( 'reset', 'Boolean', CRM_Core_DAO::$_nullObject );
+        $mainDisplay = CRM_Utils_Request::retrieve( '_qf_Main_display', 'Boolean', CRM_Core_DAO::$_nullObject );
                 
         require_once 'CRM/Contact/BAO/Contact.php';
         if ( $csContactID != $this->_userID ) {
@@ -80,6 +82,10 @@ class CRM_Contribute_Form_Contribution_Main extends CRM_Contribute_Form_Contribu
 
         if ( $reset ) {
             $this->assign( 'reset', $reset );
+        }
+
+        if ( $mainDisplay ) {
+            $this->assign( 'mainDisplay', $mainDisplay );
         }
         $urlParams = "&id={$this->_id}&qfKey={$this->controller->_key}";
         $this->assign( 'urlParams', $urlParams );
@@ -789,7 +795,12 @@ class CRM_Contribute_Form_Contribution_Main extends CRM_Contribute_Form_Contribu
              $fields['selectMembership'] != 'no_thanks') {
             require_once 'CRM/Member/BAO/Membership.php';
             require_once 'CRM/Member/BAO/MembershipType.php';
-            $memTypeDetails = CRM_Member_BAO_MembershipType::getMembershipTypeDetails( $fields['selectMembership']);
+            if ( !empty($self->_membershipTypeValues) ) {
+                $memTypeDetails = $self->_membershipTypeValues[$fields['selectMembership']];
+            } else {
+                $memTypeDetails = CRM_Member_BAO_Membership::buildMembershipTypeValues( $self,
+                                                                                        $fields['selectMembership'] );
+            }
             if ( $self->_values['amount_block_is_active'] &&
                  ! CRM_Utils_Array::value( 'is_separate_payment', $self->_membershipBlock ) ) {
                 require_once 'CRM/Utils/Money.php';
@@ -993,8 +1004,12 @@ class CRM_Contribute_Form_Contribution_Main extends CRM_Contribute_Form_Contribu
         $params['amount'] = self::computeAmount( $params, $this );
         $memFee = null;
         if ( CRM_Utils_Array::value( 'selectMembership', $params ) ) {
-            $membershipTypeValues = CRM_Member_BAO_Membership::buildMembershipTypeValues( $this,
-                                                                                          $params['selectMembership'] );
+            if ( !empty($this->_membershipTypeValues) ) {
+                $membershipTypeValues = $this->_membershipTypeValues[$params['selectMembership']];
+            } else {
+                $membershipTypeValues = CRM_Member_BAO_Membership::buildMembershipTypeValues( $this,
+                                                                                              $params['selectMembership'] );
+            }
             $memFee = $membershipTypeValues['minimum_fee'];
             if ( !$params['amount'] && !$this->_separateMembershipPayment ) {
                 $params['amount'] = $memFee ? $memFee : 0;

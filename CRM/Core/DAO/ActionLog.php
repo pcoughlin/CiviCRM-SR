@@ -215,7 +215,6 @@ class CRM_Core_DAO_ActionLog extends CRM_Core_DAO
                     'name' => 'repetition_number',
                     'type' => CRM_Utils_Type::T_INT,
                     'title' => ts('Repetition Number') ,
-                    'required' => true,
                 ) ,
             );
         }

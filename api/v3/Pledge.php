@@ -52,8 +52,7 @@ require_once 'CRM/Utils/Rule.php';
  * @access public
  */
 function civicrm_api3_pledge_create( $params ) {
-  _civicrm_api3_initialize(true );
-  try{
+
 
     if ($params['pledge_amount']){
       //acceptable in unique format or DB format but change to unique format here
@@ -61,10 +60,6 @@ function civicrm_api3_pledge_create( $params ) {
     }
      $required =  array('contact_id', 'amount', array('pledge_contribution_type_id','contribution_type_id') , 'installments','start_date');
     
-    if(CRM_Utils_Array::value('id',$params)){
-      //todo move this into civicrm_api3_verify mandatory in some way - or civicrm_api
-      $required =  array('id');
-    }
    civicrm_api3_verify_mandatory ($params,null,$required);
      
     $values  = array( );
@@ -83,12 +78,8 @@ function civicrm_api3_pledge_create( $params ) {
 
     }
 
-    return civicrm_api3_create_success($pledgeArray,$params,$pledge);
-  } catch (PEAR_Exception $e) {
-    return civicrm_api3_create_error( $e->getMessage() );
-  } catch (Exception $e) {
-    return civicrm_api3_create_error( $e->getMessage() );
-  }
+    return civicrm_api3_create_success($pledgeArray,$params,'pledge','create',$pledge);
+
 }
 
 /**
@@ -101,8 +92,7 @@ function civicrm_api3_pledge_create( $params ) {
  * @access public
  */
 function civicrm_api3_pledge_delete( $params ) {
-  _civicrm_api3_initialize(true);
-  try{
+
 
     civicrm_api3_verify_one_mandatory ($params,null,array('id', 'pledge_id'));
     if (!empty($params['id'])){
@@ -117,15 +107,11 @@ function civicrm_api3_pledge_delete( $params ) {
 
     require_once 'CRM/Pledge/BAO/Pledge.php';
     if ( CRM_Pledge_BAO_Pledge::deletePledge( $pledgeID ) ) {
-      return civicrm_api3_create_success(array($pledgeID =>$pledgeID) );
+      return civicrm_api3_create_success(array($pledgeID =>$pledgeID),$params,'pledge','delete' );
     } else {
       return civicrm_api3_create_error(  'Could not delete pledge'  );
     }
-  } catch (PEAR_Exception $e) {
-    return civicrm_api3_create_error( $e->getMessage() );
-  } catch (Exception $e) {
-    return civicrm_api3_create_error( $e->getMessage() );
-  }
+
 }
 
 /**
@@ -138,8 +124,6 @@ function civicrm_api3_pledge_delete( $params ) {
  * @access public
  */
 function civicrm_api3_pledge_get( $params ) {
-  _civicrm_api3_initialize(true );
-  try{
     civicrm_api3_verify_mandatory ($params);
     if(!empty($params['id'])  && empty($params['pledge_id'])){
       //if you pass in 'id' it will be treated by the query as contact_id
@@ -192,19 +176,11 @@ function civicrm_api3_pledge_get( $params ) {
 
     $pledge = array( );
     while ( $dao->fetch( ) ) {
-      if ($params['sequential']){
-        $pledge[] = $query->store( $dao );
-      }else{
         $pledge[$dao->pledge_id] = $query->store( $dao );
-      }
     }
 
-    return civicrm_api3_create_success($pledge,$params,$dao);
-  } catch (PEAR_Exception $e) {
-    return civicrm_api3_create_error( $e->getMessage() );
-  } catch (Exception $e) {
-    return civicrm_api3_create_error( $e->getMessage() );
-  }
+    return civicrm_api3_create_success($pledge,$params, 'pledge','get',$dao);
+
 }
 
 /**
@@ -287,6 +263,15 @@ function _civicrm_api3_pledge_format_params( $params, &$values, $create=false ) 
     //at this point both should be the same so unset both if not set - passing in empty
     //value causes crash rather creating new - do it before next section as null values ignored in 'switch'
     unset($values['id']);
+    
+    //if you have a single installment when creating & you don't set the pledge status (not a required field) then 
+    //status id is left null for pledge payments in BAO
+    // so we are hacking in the addition of the pledge_status_id to pending here
+    if(empty($values['status_id']) && $params['installments'] ==1){
+      require_once 'CRM/Contribute/PseudoConstant.php';
+      $contributionStatus = CRM_Contribute_PseudoConstant::contributionStatus( null, 'name' );
+      $values['status_id'] = array_search( 'Pending', $contributionStatus);
+    }
   }
   if ( !empty( $params['scheduled_date']) ){
     //scheduled date is required to set next payment date - defaults to start date
@@ -332,13 +317,6 @@ function _civicrm_api3_pledge_format_params( $params, &$values, $create=false ) 
         break;
 
 
-      case 'create_date':
-      case 'scheduled_date':
-      case 'start_date':
-        if (!CRM_Utils_Rule::datetime($value)) {
-          return civicrm_api3_create_error("$key not a valid date: $value");
-        }
-        break;
       case 'installment_amount':
       case 'amount':
         if (!CRM_Utils_Rule::money($value)) {

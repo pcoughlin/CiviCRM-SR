@@ -109,7 +109,7 @@ class CRM_Member_Form_MembershipRenewal extends CRM_Member_Form
                 if ( $paymentProcessor['payment_processor_type'] == 'PayPal' && !$paymentProcessor['user_name'] ) {
                     continue;
                 } else if ( $paymentProcessor['payment_processor_type'] == 'Dummy' && $this->_mode == 'live' ) {
-                    continue;
+                	continue;
                 } else {
                     $paymentObject =& CRM_Core_Payment::singleton( $this->_mode, $paymentProcessor, $this );
                     $error = $paymentObject->checkConfig( );
@@ -127,7 +127,9 @@ class CRM_Member_Form_MembershipRenewal extends CRM_Member_Form
             // also check for billing information
             // get the billing location type
             $locationTypes =& CRM_Core_PseudoConstant::locationType( );
-            $this->_bltID = array_search( ts('Billing'),  $locationTypes );
+            // CRM-8108 remove ts around Billing location type
+            //$this->_bltID = array_search( ts('Billing'),  $locationTypes );
+            $this->_bltID = array_search( 'Billing',  $locationTypes );
             if ( ! $this->_bltID ) {
                 CRM_Core_Error::fatal( ts( 'Please set a location type of %1', array( 1 => 'Billing' ) ) );
             }
@@ -476,8 +478,6 @@ WHERE   id IN ( '. implode( ' , ', array_keys( $membershipType ) ) .' )';
         $this->_params = $formValues = $this->controller->exportValues( $this->_name );
         
        	// use values from screen
-	    $defaults['contribution_type_id'] = $this->_params['contribution_type_id'];
-	    $defaults['total_amount'] = $this->_params['total_amount'];
 	    
         if ( $formValues['membership_type_id'][1] <> 0 ) {
             $defaults['receipt_text_renewal'] =  CRM_Core_DAO::getFieldValue( 'CRM_Member_DAO_MembershipType', 
@@ -486,6 +486,11 @@ WHERE   id IN ( '. implode( ' , ', array_keys( $membershipType ) ) .' )';
         }
 
         if ( $this->_mode ) {
+            $formValues['total_amount'] = CRM_Core_DAO::getFieldValue( 'CRM_Member_DAO_MembershipType',
+                $this->_memType,'minimum_fee' );
+            $formValues['contribution_type_id'] = CRM_Core_DAO::getFieldValue( 'CRM_Member_DAO_MembershipType', 
+                $this->_memType,'contribution_type_id' );
+
             require_once 'CRM/Core/BAO/PaymentProcessor.php';
             $this->_paymentProcessor = CRM_Core_BAO_PaymentProcessor::getPayment( $formValues['payment_processor_id'],
                                                                                   $this->_mode );

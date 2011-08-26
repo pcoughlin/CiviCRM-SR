@@ -295,12 +295,13 @@ class CRM_Event_Form_Registration_Register extends CRM_Event_Form_Registration
     public function buildQuickForm( ) 
     {  
         $contactID = parent::getContactID( );
+        $this->assign( 'contact_id', $contactID );
+        $display_name = '';
         if ( $contactID ) {
             require_once 'CRM/Contact/BAO/Contact.php';
-            $name = CRM_Contact_BAO_Contact::displayName( $contactID  );
-            $this->assign( 'display_name', $name );
-            $this->assign( 'contact_id', $contactID );
+            $display_name = CRM_Contact_BAO_Contact::displayName( $contactID  );
         }
+        $this->assign( 'display_name', $display_name );
 
         $config = CRM_Core_Config::singleton( );
         $this->add('hidden','scriptFee',null);
@@ -694,7 +695,6 @@ class CRM_Event_Form_Registration_Register extends CRM_Event_Form_Registration
     static function formRule( $fields, $files, $self) 
     {
         $errors = array( );
-        
         //To check if the user is already registered for the event(CRM-2426)
         if (!$self->_skipDupeRegistrationCheck) {
             $self->checkRegistration($fields, $self);
@@ -783,13 +783,19 @@ class CRM_Event_Form_Registration_Register extends CRM_Event_Form_Registration
                     $isZeroAmount = true;
                 }
             } else if ( CRM_Utils_Array::value( 'amount', $fields ) &&
-                        ( CRM_Utils_Array::value( 'value',  $self->_values['fee'][$fields['amount']] ) == 0 ) ) {
+                ( isset(  $self->_values['discount'][$fields['amount']] ) 
+                && CRM_Utils_Array::value( 'value',  $self->_values['discount'][$fields['amount']] ) == 0 ) ) {
+                $isZeroAmount = true; 
+            } else if ( CRM_Utils_Array::value( 'amount', $fields ) &&
+                ( isset(  $self->_values['fee'][$fields['amount']] ) 
+                && CRM_Utils_Array::value( 'value',  $self->_values['fee'][$fields['amount']] ) == 0 ) ) {
                 $isZeroAmount = true; 
             }
 
             if ( $isZeroAmount && !($self->_forcePayement && CRM_Utils_Array::value( 'additional_participants', $fields ) ) ) {
                 $skipPayementValidation = true;
             }
+            
             // also return if paylater mode or zero fees for valid members
             if ( CRM_Utils_Array::value( 'is_pay_later', $fields ) ||
                  CRM_Utils_Array::value( 'bypass_payment', $fields ) ||
@@ -1246,7 +1252,9 @@ class CRM_Event_Form_Registration_Register extends CRM_Event_Form_Registration
                 if ( ! empty( $emailString ) ) {
                     require_once 'CRM/Contact/BAO/Contact.php';
                     $match = CRM_Contact_BAO_Contact::matchContactOnEmail( $emailString, 'Individual' ) ;
-                    $contactID = $match->contact_id;
+                    if ( !empty( $match ) ) {
+                        $contactID = $match->contact_id;
+                    }
                 }
             }
         }

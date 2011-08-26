@@ -387,15 +387,17 @@ class CRM_Activity_BAO_Activity extends CRM_Activity_DAO_Activity
                     self::deleteActivityAssignment( $activityId );
                 }
 
+                $values = array( );
                 foreach ( $params['assignee_contact_id'] as $acID ) {
                     if ( $acID ) {
-                        $assignmentParams['assignee_contact_id'] = $acID;
-                        $resultAssignment = CRM_Activity_BAO_ActivityAssignment::create( $assignmentParams );
-                        if( is_a( $resultAssignment, 'CRM_Core_Error' ) ) {
-                            $transaction->rollback( );
-                            return $resultAssignment;
-                        }
+                        $values[] = "( $activityId, $acID )";
                     }
+                }
+                while ( ! empty( $values ) ) {
+                    $input = array_splice( $values, 0, CRM_Core_DAO::BULK_INSERT_COUNT );
+                    $str   = implode( ',', $input );
+                    $sql = "INSERT INTO civicrm_activity_assignment ( activity_id, assignee_contact_id ) VALUES $str;";
+                    CRM_Core_DAO::executeQuery( $sql );
                 }
             } else {
                 $assignmentParams['assignee_contact_id'] = $params['assignee_contact_id'];
@@ -436,15 +438,18 @@ class CRM_Activity_BAO_Activity extends CRM_Activity_DAO_Activity
                     self::deleteActivityTarget( $activityId );
                 }
 
+                $values = array( );
                 foreach ( $params['target_contact_id'] as $tid ) {
                     if ( $tid ) {
-                        $targetParams['target_contact_id'] = $tid;
-                        $resultTarget = CRM_Activity_BAO_ActivityTarget::create( $targetParams );
-                        if ( is_a( $resultTarget, 'CRM_Core_Error' ) ) {
-                            $transaction->rollback( );
-                            return $resultTarget;
-                        }
+                        $values[] = "( $activityId, $tid )";
                     }
+                }
+
+                while ( ! empty( $values ) ) {
+                    $input = array_splice( $values, 0, CRM_Core_DAO::BULK_INSERT_COUNT );
+                    $str   = implode( ',', $input );
+                    $sql = "INSERT INTO civicrm_activity_target ( activity_id, target_contact_id ) VALUES $str;";
+                    CRM_Core_DAO::executeQuery( $sql );
                 }
             } else {
                 $targetParams['target_contact_id'] = $params['target_contact_id'];
@@ -719,7 +724,7 @@ class CRM_Activity_BAO_Activity extends CRM_Activity_DAO_Activity
        SELECT DISTINCT *  from ( {$sqlClause} )
 as tbl ";
 
-        $query = $query . $groupBy. $order. $limit;
+        $query = $query . $groupBy. $order;
 
         $dao = CRM_Core_DAO::executeQuery( $query, $params );
         
@@ -784,6 +789,9 @@ LEFT JOIN  civicrm_case_activity ON ( civicrm_case_activity.activity_id = {$acti
     WHERE  civicrm_case_activity.id IS NULL";
         }
 
+        //limit query in the last step
+        $query .= $limit;
+        
         $dao = CRM_Core_DAO::executeQuery( $query );
                 
         //CRM-3553, need to check user has access to target groups.
@@ -824,12 +832,13 @@ LEFT JOIN  civicrm_case_activity ON ( civicrm_case_activity.activity_id = {$acti
                 $values[$activityID]['case_subject'] = $dao->case_subject;
             } else {
                 $values[$activityID]['recipients'] = ts('(recipients)');
+                $values[$activityID]['target_contact_name']   = '';
+                $values[$activityID]['assignee_contact_name'] = '';
+                $values[$activityID]['mailingId']             = '';
                 if ( $accessCiviMail && in_array( $dao->source_record_id, $mailingIDs ) ) {
                     $values[$activityID]['mailingId'] = 
                         CRM_Utils_System::url( 'civicrm/mailing/report', 
                                                "mid={$dao->source_record_id}&reset=1&cid={$dao->source_contact_id}&context=activitySelector" ); 
-                    $values[$activityID]['target_contact_name'] = '';
-                    $values[$activityID]['assignee_contact_name'] = '';
                 }
             }
         }
@@ -1562,7 +1571,7 @@ LEFT JOIN   civicrm_case_activity ON ( civicrm_case_activity.activity_id = tbl.a
             
             $subject = "{$membershipType}";
             
-            if ( $activity->source != 'null' && !empty($activity->source) ) {
+            if ( !empty($activity->source) && $activity->source != 'null' ) {
                 $subject .= " - {$activity->source}";
             }
             
@@ -1612,7 +1621,7 @@ SELECT  display_name
                        
             require_once "CRM/Utils/Money.php";
             $subject .= CRM_Utils_Money::format($activity->total_amount, $activity->currency);
-            if ( $activity->source != 'null' ) {
+            if ( !empty($activity->source) && $activity->source != 'null' ) {
                 $subject .= " - {$activity->source}";
                 
             } 

@@ -45,14 +45,20 @@
     {assign var="timeElement" value=$elementName|cat:'_time'}
     {$form.$elementName.html|crmReplace:class:hiddenElement}
 {/if}
+
 {assign var='displayDate' value=$elementId|cat:"_display"}
-<input type="text" name="{$displayDate}" id="{$displayDate}" class="dateplugin dpDate"/>
+
+{if $action neq 4 && $action neq 1028}
+    <input type="text" name="{$displayDate}" id="{$displayDate}" class="dateplugin" autocomplete="off"/>
+{/if}
+
 {if $timeElement AND !$tElement}
     &nbsp;&nbsp;{$form.$timeElement.label}&nbsp;&nbsp;{$form.$timeElement.html|crmReplace:class:six}
 {/if}
+
 {if $action neq 4 && $action neq 1028}
-    <span class="crm-clear-link">(<a href="javascript:clearDateTime( '{$elementId}' );">{ts}Clear{/ts}{$form.$elementId.label|@strip_tags} </a>)</span>
-{/if}
+    <span class="crm-clear-link">(<a href="javascript:clearDateTime( '{$elementId}' );">{ts}clear{/ts}</a>)</span>
+
 <script type="text/javascript">
     {literal}
     cj( function() {
@@ -76,10 +82,12 @@
         case 'mm/dd':
             altDateFormat = 'mm/dd';
             break;
-        case 'M yy':
-            altDateFormat = 'yy-mm';
-            break;
-     }
+      }
+      
+      if ( !( ( date_format == 'M yy' ) || ( date_format == 'yy' ) || ( date_format == 'yy-mm' ) ) ) {
+          cj( element_date ).addClass( 'dpDate' );
+      }
+
       {/literal}
       var yearRange   = currentYear - parseInt( cj( alt_field ).attr('startOffset') ); 
           yearRange  += ':';
@@ -129,4 +137,5 @@
     }
     {/literal}
 </script>
+{/if}
 {/strip}

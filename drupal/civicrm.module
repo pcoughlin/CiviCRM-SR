@@ -332,9 +332,6 @@ function civicrm_initialize( )
             drupal_add_js($path . '/filter.js');
             drupal_add_css($path . '/filter.css');
         }
-
-        //Load the Preferences related to Accessability Implementation        
-        CRM_Core_BAO_Preferences::variableLoad();
     }
 
     return true;
@@ -396,6 +393,47 @@ function civicrm_invoke( )
         require_once 'CRM/Core/BAO/UFMatch.php';
         CRM_Core_BAO_UFMatch::synchronize( $user, false, 'Drupal',
                                            civicrm_get_ctype( 'Individual' ) );
+    }
+
+    // fix the path for the url alias module
+    $urlAlias = false;
+    foreach ( $args as $index => $arg ) {
+        if ( strpos( $arg, '=' ) !== false ) {
+            require_once 'CRM/Utils/System.php';
+
+            $keepArg = null;
+
+            // first check if there is a ?
+            if ( strpos( $arg, '?' ) !== false ) {
+                $items = CRM_Utils_System::explode( '?', $arg, 2 );
+                $keepArg = $items[0];
+                $item    = $items[1];
+            } else {
+                $item = $arg;
+            }
+
+            // next split it on &
+            $elements = explode( '&', $item );
+
+            foreach ( $elements as $element ) {
+                // finally split on =
+                list( $key, $value ) = CRM_Utils_System::explode( '=', $element, 2 );
+                if ( $value ) {
+                    $_GET[$key] = $value;
+                }
+            }
+
+            if ( $keepArg ) {
+                $args[$index] = $keepArg;
+            } else {
+                unset( $args[$index] );
+            }
+            $urlAlias = true;
+        }
+    }
+
+    if ( $urlAlias ) {
+        $_GET['q'] = implode( '/', $args );
     }
 
     $printedContent = null;

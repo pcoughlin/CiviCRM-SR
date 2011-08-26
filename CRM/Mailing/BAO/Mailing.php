@@ -909,14 +909,9 @@ AND civicrm_contact.is_opt_out =0";
         
         //handle should override VERP address.    
         $skipEncode = false;
-        $query = "
-SELECT override_verp 
-FROM   civicrm_mailing, civicrm_mailing_job 
-WHERE  civicrm_mailing_job.id = {$job_id} 
-AND    civicrm_mailing.id = civicrm_mailing_job.mailing_id";
-        
+
         if ( $job_id && 
-            CRM_Core_DAO::singleValueQuery( $query ) ) {
+             self::overrideVerp( $job_id ) ) {
             $verp['reply'] = "\"{$this->from_name}\" <{$this->from_email}>"; 
         }
         
@@ -969,7 +964,8 @@ AND    civicrm_mailing.id = civicrm_mailing_job.mailing_id";
      */
     public function &compose($job_id, $event_queue_id, $hash, $contactId, 
                              $email, &$recipient, $test, 
-                             $contactDetails, &$attachments, $isForward = false, $fromEmail = null ) 
+                             $contactDetails, &$attachments, $isForward = false, 
+                             $fromEmail = null, $replyEmail = null ) 
     {
         require_once 'CRM/Utils/Token.php';
         require_once 'CRM/Activity/BAO/Activity.php';
@@ -988,6 +984,10 @@ AND    civicrm_mailing.id = civicrm_mailing_job.mailing_id";
             $headers['From'] = "<{$fromEmail}>";
         } 
 
+        if ( $replyEmail && ( $fromEmail != $replyEmail ) ) {
+            $headers['Reply-To'] = "<{$replyEmail}>";
+        }
+        
         if ( defined( 'CIVICRM_MAIL_SMARTY' ) &&
              CIVICRM_MAIL_SMARTY ) {
             require_once 'CRM/Core/Smarty/resources/String.php';
@@ -1100,8 +1100,16 @@ AND    civicrm_mailing.id = civicrm_mailing_job.mailing_id";
         $mailParams['toEmail'] = $email;
 
         require_once 'CRM/Utils/Hook.php';
-        CRM_Utils_Hook::alterMailParams( $mailParams );
-
+        CRM_Utils_Hook::alterMailParams( $mailParams, 'civimail' );
+        
+        //cycle through mailParams and set headers array
+        foreach ( $mailParams as $paramKey => $paramValue ) {
+			//exclude values not intended for the header
+			if ( !in_array( $paramKey, array('text','html','attachments','toName', 'toEmail') ) ) {
+                $headers[$paramKey] = $paramValue;
+            }
+        }
+            
         if ( ! empty( $mailParams['text'] ) ) {
             $message->setTxtBody( $mailParams['text'] );
         }
@@ -2004,7 +2012,7 @@ LEFT JOIN civicrm_mailing_group g ON g.mailing_id   = m.id
         
         $returnProperties = array( );
         $returnProperties['display_name'] = 
-            $returnProperties['contact_id'] = $returnProperties['preferred_mail_format'] = 1;
+            $returnProperties['contact_id'] = $returnProperties['preferred_mail_format'] = $returnProperties['hash'] = 1;
 
         foreach ( $properties as $p ) {
             $returnProperties[$p] = 1;
@@ -2077,8 +2085,10 @@ LEFT JOIN civicrm_mailing_group g ON g.mailing_id   = m.id
         //get the total number of contacts to fetch from database.
         $numberofContacts = count( $contactIDs );
 
+
         require_once 'CRM/Contact/BAO/Query.php';
         $query   = new CRM_Contact_BAO_Query( $params, $returnProperties );
+
         $details = $query->apiQuery( $params, $returnProperties, NULL, NULL, 0, $numberofContacts );
         
         $contactDetails =& $details[0];
@@ -2146,7 +2156,7 @@ LEFT JOIN civicrm_mailing_group g ON g.mailing_id   = m.id
                     array(
                           'size'     => "5",
                           'multiple' => true,
-                          'onchange' => "return tokenReplText(this);"
+                          'onclick'  => "return tokenReplText(this);"
                           )
                     );
         
@@ -2165,7 +2175,7 @@ LEFT JOIN civicrm_mailing_group g ON g.mailing_id   = m.id
                     array(
                           'size'     => "5",
                           'multiple' => true,
-                          'onchange' => "return tokenReplText(this);"
+                          'onclick'  => "return tokenReplText(this);"
                           )
                     );
         
@@ -2174,7 +2184,7 @@ LEFT JOIN civicrm_mailing_group g ON g.mailing_id   = m.id
                     array(
                           'size'     => "5",
                           'multiple' => true,
-                          'onchange' => "return tokenReplHtml(this);"
+                          'onclick'  => "return tokenReplHtml(this);"
                           )
                     );
         
@@ -2301,6 +2311,9 @@ SELECT  $mailing.id as mailing_id
      */
     public function getMailingContent( &$report, &$form ) 
     {
+        $htmlHeader = $textHeader = null;
+        $htmlFooter = $textFooter = null;
+
         require_once 'CRM/Mailing/BAO/Component.php';
         if ($report['mailing']['header_id']) { 
             $header = new CRM_Mailing_BAO_Component();
@@ -2346,6 +2359,22 @@ SELECT  $mailing.id as mailing_id
         $report['mailing']['attachment'] = CRM_Core_BAO_File::attachmentInfo( 'civicrm_mailing',
                                                                               $form->_mailing_id );
         return $report;
+    }
+
+    static function overrideVerp( $jobID ) {
+        static $_cache = array( );
+
+        if ( ! isset( $_cache[$jobID] ) ) {
+            $query = "
+SELECT     override_verp 
+FROM       civicrm_mailing
+INNER JOIN civicrm_mailing_job ON civicrm_mailing.id = civicrm_mailing_job.mailing_id
+WHERE  civicrm_mailing_job.id = %1
+";
+            $params = array( 1 => array( $jobID, 'Integer' ) );
+            $_cache[$jobID] = CRM_Core_DAO::singleValueQuery( $query, $params );
+        }
+        return $_cache[$jobID];
     }
 
 }

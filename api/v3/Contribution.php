@@ -54,8 +54,6 @@ require_once 'CRM/Contribute/PseudoConstant.php';
  * @example ContributionCreate.php
  */
 function civicrm_api3_contribution_create($params) {
-	_civicrm_api3_initialize ( true );
-	try {
 		civicrm_api3_verify_mandatory ( $params, null, array ('contact_id', 'total_amount', array ('contribution_type_id', 'contribution_type' ) ) );
 		
 		$error = _civicrm_api3_contribute_check_params ( $params );
@@ -84,12 +82,8 @@ function civicrm_api3_contribution_create($params) {
 		}
 		_civicrm_api3_object_to_array ( $contribution, $contributeArray [$contribution->id] );
 		
-		return civicrm_api3_create_success ( $contributeArray, $params );
-	} catch ( PEAR_Exception $e ) {
-		return civicrm_api3_create_error ( $e->getMessage () );
-	} catch ( Exception $e ) {
-		return civicrm_api3_create_error ( $e->getMessage () );
-	}
+		return civicrm_api3_create_success ( $contributeArray, $params, 'contribution',$contribution );
+
 }
 
 /**
@@ -102,8 +96,7 @@ function civicrm_api3_contribution_create($params) {
  * @access public
  */
 function civicrm_api3_contribution_delete($params) {
-	_civicrm_api3_initialize ( true );
-	try {
+
 		civicrm_api3_verify_one_mandatory ( $params, null, array ('contribution_id','id' ) );
 		$contributionID = CRM_Utils_Array::value ( 'contribution_id', $params )? $params['contribution_id']:$params['id'];
 		require_once 'CRM/Contribute/BAO/Contribution.php';
@@ -112,11 +105,7 @@ function civicrm_api3_contribution_delete($params) {
 		} else {
 			return civicrm_api3_create_error ( 'Could not delete contribution' );
 		}
-	} catch ( PEAR_Exception $e ) {
-		return civicrm_api3_create_error ( $e->getMessage () );
-	} catch ( Exception $e ) {
-		return civicrm_api3_create_error ( $e->getMessage () );
-	}
+
 }
 
 /**
@@ -132,10 +121,14 @@ function civicrm_api3_contribution_delete($params) {
  * @access public
  */
 function civicrm_api3_contribution_get($params) {
-	_civicrm_api3_initialize ( true );
-	try {
+
 		civicrm_api3_verify_mandatory ( $params );
-		
+		if(CRM_Utils_Array::value('id', $params) ){
+    //api supports 'id' but BAO supports 'contribution_id. Change it here
+		  $params['contribution_id'] = CRM_Utils_Array::value('contribution_id', $params,$params['id']);
+		  unset ($params['id']);
+		}
+
 		$inputParams = array ();
 		$returnProperties = array ();
 		$otherVars = array ('sort', 'offset', 'rowCount' );
@@ -182,16 +175,24 @@ function civicrm_api3_contribution_get($params) {
 		while ( $dao->fetch () ) {
 			$contribution [$dao->contribution_id] = $query->store ( $dao );
 		}
-		$dao->free ();
-		
-		return civicrm_api3_create_success ( $contribution, $params );
-	} catch ( PEAR_Exception $e ) {
-		return civicrm_api3_create_error ( $e->getMessage () );
-	} catch ( Exception $e ) {
-		return civicrm_api3_create_error ( $e->getMessage () );
-	}
-}
 
+		
+		return civicrm_api3_create_success ( $contribution, $params, 'contribution',$dao);
+
+}
+/*
+ * Return valid fields for API
+ */
+function civicrm_api3_contribution_getfields( $params ) {
+    $fields =  _civicrm_api_get_fields('contribution') ;
+    $fields['note'] = array('name' => 'note',
+                                           'title' => 'note',
+                                           'type' => 2,
+                                           'description' => 'Associated Note in the notes table');
+
+
+    return civicrm_api3_create_success($fields );
+}
 /**
  * This function ensures that we have the right input contribution parameters
  *
@@ -364,9 +365,7 @@ function _civicrm_api3_contribute_format_params($params, &$values, $create = fal
  * 
  */
 function civicrm_api3_contribution_transact($params) {
-	_civicrm_api3_initialize ( true );
-	try {
-		
+
 		civicrm_api3_verify_mandatory ( $params );
 		
 		$values = array ();
@@ -432,10 +431,6 @@ function civicrm_api3_contribution_transact($params) {
 		
 		$contribution = civicrm_contribution_add ( $params );
 		return $contribution;
-	} catch ( PEAR_Exception $e ) {
-		return civicrm_create_error ( $e->getMessage () );
-	} catch ( Exception $e ) {
-		return civicrm_create_error ( $e->getMessage () );
-	}
+
 }
 

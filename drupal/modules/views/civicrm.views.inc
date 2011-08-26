@@ -511,8 +511,9 @@ function civicrm_views_data() {
                                                    );
 
     // Organization Name
-    $data['civicrm_contact']['organization_name'] = array(
+    $data['civicrm_contact']['current_employer'] = array(
                                                           'title' => t('Organization Name'), // The item it appears as on the UI,
+                                                          'real field' => 'organization_name',
                                                           'help' => t('The display name of the contact\'s organizations.'), // The help that appears on the UI,
                                                           'field' => array(
                                                                            'handler' => 'views_handler_field',
@@ -579,7 +580,7 @@ function civicrm_views_data() {
                          'do_not_trade'      => 1,
                          'is_opt_out'        => 1,
                          'contact_type'      => 1,
-                         'organization_name' => 1,
+                         'current_employer'  => 1,
                          );
     civicrm_views_add_fields( $fields, $data['civicrm_contact'], $skipFields, 'civicrm_contact' );
 
@@ -710,7 +711,7 @@ function civicrm_views_data() {
                                                        'title' => t('Full Street Address'),
                                                        'help' => t('Full Street Address without Country, State or Postcode'),
                                                        'field' => array(
-                                                                        'handler' => 'views_handler_field',
+                                                                        'handler' => 'civicrm_handler_field_address',
                                                                         'click sortable' => TRUE,
                                                                         ),
 
@@ -733,7 +734,30 @@ function civicrm_views_data() {
                                                                'title' => t('Supplemental Street Address'),
                                                                'help' => t('Supplemental Street Address such as Apartment or Suite Number or Department'),
                                                                'field' => array(
-                                                                                'handler' => 'views_handler_field',
+                                                                                'handler' => 'civicrm_handler_field_address',
+                                                                                'click sortable' => TRUE,
+                                                                                ),
+
+                                                               'argument' => array(
+                                                                                   'handler' => 'views_handler_argument',
+                                                                                   ),
+
+                                                               'filter' => array(
+                                                                                 'handler' => 'views_handler_filter_string',
+                                                                                 'allow empty' => TRUE,
+                                                                                 ),
+
+                                                               'sort' => array(
+                                                                               'handler' => 'views_handler_sort',
+                                                                               ),
+                                                               );
+
+    //FULL STREET ADDRESS SUPPLEMENTAL 2
+    $data['civicrm_address']['supplemental_address_2'] = array(
+                                                               'title' => t('2nd Supplemental Street Address'),
+                                                               'help' => t('2nd Supplemental Street Address such as Apartment or Suite Number or Department'),
+                                                               'field' => array(
+                                                                                'handler' => 'civicrm_handler_field_address',
                                                                                 'click sortable' => TRUE,
                                                                                 ),
 
@@ -756,7 +780,7 @@ function civicrm_views_data() {
                                              'title' => t('City / Suburb'),
                                              'help' => t('The City or Suburb the address is at'),
                                              'field' => array(
-                                                              'handler' => 'views_handler_field',
+                                                              'handler' => 'civicrm_handler_field_address',
                                                               'click sortable' => TRUE,
                                                               ),
 
@@ -780,7 +804,7 @@ function civicrm_views_data() {
                                                        'real field' => 'state_province_id',
                                                        'help' => t('The State or Province of the Address'),
                                                        'field' => array(
-                                                                        'handler' => 'civicrm_handler_field_state',
+                                                                        'handler' => 'civicrm_handler_field_address',
                                                                         'click sortable' => TRUE,
                                                                         ),
 
@@ -803,7 +827,7 @@ function civicrm_views_data() {
                                                     'title' => t('ZIP / Postal Code'),
                                                     'help' => t('ZIP / Postal Code of the Address'),
                                                     'field' => array(
-                                                                     'handler' => 'views_handler_field',
+                                                                     'handler' => 'civicrm_handler_field_address',
                                                                      'click sortable' => TRUE,
                                                                      ),
 
@@ -826,7 +850,7 @@ function civicrm_views_data() {
                                                    'title' => t('Latitude'),
                                                    'help' => t('Latitude of the Address for mapping'),
                                                    'field' => array(
-                                                                    'handler' => 'views_handler_field',
+                                                                    'handler' => 'civicrm_handler_field_address',
                                                                     'click sortable' => TRUE,
                                                                     ),
 
@@ -849,7 +873,7 @@ function civicrm_views_data() {
                                                    'title' => t('Longitude'),
                                                    'help' => t('Longitude of the Address for mapping'),
                                                    'field' => array(
-                                                                    'handler' => 'views_handler_field',
+                                                                    'handler' => 'civicrm_handler_field_address',
                                                                     'click sortable' => TRUE,
                                                                     ),
 
@@ -916,12 +940,11 @@ function civicrm_views_data() {
                                                );
 
     //Address name
-    $link = l(t('In Global Settings'), 'civicrm/admin/setting/preferences/address', array('query' => array('reset=1')));
     $data['civicrm_address']['name'] = array(
                                              'title' => t('Address Name'),
-                                             'help' => t('Be sure addres name is enabled %link', array('%link' => $link)),
+                                             'help' => t('Be sure addres name is enabled in CiviCRM' ),
                                              'field' => array(
-                                                              'handler' => 'views_handler_field',
+                                                              'handler' => 'civicrm_handler_field_address',
                                                               'click sortable' => TRUE,
                                                               ),
 
@@ -5511,7 +5534,7 @@ function civicrm_views_data() {
                                                                           ),
 
                                                       'filter' => array(
-                                                                                                            'handler' => 'views_handler_filter_numeric',
+                                                                        'handler' => 'views_handler_filter_numeric',
                                                                         'allow empty' => TRUE,
                                                                         ),
 
@@ -6050,6 +6073,18 @@ function civicrm_views_custom_data_cache($data, $entity_type, $groupID, $subType
                                       'field' => 'entity_id',
                                       ),
                   );
+        // expose custom data to users view - note I tested with contact & membership fields which worked
+        // event won't work due to missing relationship in chain. 
+        // 'contribution' & 'activity' not currently related to users so excluded
+        if($jointable != 'civicrm_event' && $jointable != 'civicrm_activity' && $jointable != 'civicrm_contribution'){
+          $data[$currentgroup['table_name']]['table']['join']['users'] = 
+            array(
+                              'left_table' => $jointable,
+															'left_field' => 'id',
+  														'field' => 'entity_id',
+
+                  );
+        }
         $currentgroupfields = $currentgroup['fields'];
         $customHTMLTypes = array( 'Select', 'Multi-Select', 'AdvMulti-Select', 'Radio', 'CheckBox', 
                                   'Select State/Province', 'Select Country', 'Multi-Select Country',
@@ -6066,7 +6101,9 @@ function civicrm_views_custom_data_cache($data, $entity_type, $groupID, $subType
             if ( in_array( $currentfield['html_type'],
                            $customHTMLTypes ) ) {
                 $handler = 'civicrm_handler_field_custom';
-            } else {
+            } else if ( $currentfield['html_type'] == 'File' ) {
+                $handler = 'civicrm_handler_field_custom_file';
+             }else {
                 $handler = civicrm_get_field_handler( $currentfield['data_type'] );
             }
             
@@ -6108,7 +6145,7 @@ function civicrm_views_custom_data_cache($data, $entity_type, $groupID, $subType
             }
         }
     }
-    return $data;
+    return $data; 
 }
 
 
@@ -6312,8 +6349,14 @@ function civicrm_views_handlers() {
                        'civicrm_handler_field_gender' => array(
                                                                'parent' => 'views_handler_field',
                                                                ),
+                       'civicrm_handler_field_location' => array(
+                                                               'parent' => 'views_handler_field',
+                                                               ),
+                       'civicrm_handler_field_address' => array(
+                                                              'parent' => 'civicrm_handler_field_location',
+                                                              ),
                        'civicrm_handler_field_phone' => array(
-                                                              'parent' => 'views_handler_field',
+                                                              'parent' => 'civicrm_handler_field_location',
                                                               ),
                        'civicrm_handler_field_phone_type' => array(
                                                                    'parent' => 'views_handler_field',
@@ -6322,16 +6365,16 @@ function civicrm_views_handlers() {
                                                                       'parent' => 'views_handler_field',
                                                                       ),
                        'civicrm_handler_field_state' => array(
-                                                              'parent' => 'views_handler_field',
+                                                              'parent' => 'civicrm_handler_field_location',
                                                               ),
                        'civicrm_handler_field_country' => array(
-                                                                'parent' => 'views_handler_field',
+                                                                'parent' => 'civicrm_handler_field_location',
                                                                 ),
                        'civicrm_handler_field_county' => array(
-                                                               'parent' => 'views_handler_field',
+                                                               'parent' => 'civicrm_handler_field_location',
                                                                ),
                        'civicrm_handler_field_email' => array(
-                                                              'parent' => 'views_handler_field',
+                                                              'parent' => 'civicrm_handler_field_location',
                                                               ),
                        'civicrm_handler_field_datetime' => array(
                                                                  'parent' => 'views_handler_field_date',
@@ -6398,6 +6441,9 @@ function civicrm_views_handlers() {
                        'civicrm_handler_field_custom' => array(
                                                                'parent' => 'views_handler_field',
                                                                ),
+                       'civicrm_handler_field_custom_file' => array( 
+                                                                    'parent' => 'views_handler_field',
+                                                                     ),
                        'civicrm_handler_field_campaign_type' => array(
                                                                       'parent' => 'views_handler_field',
                                                                       ),

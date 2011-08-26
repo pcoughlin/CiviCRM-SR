@@ -66,7 +66,6 @@ require_once 'CRM/Core/DAO/OptionGroup.php';
  */
 function civicrm_api3_activity_create( $params ) {
 
-    try{
     if ( !CRM_Utils_Array::value('source_contact_id',$params )){
            $session = CRM_Core_Session::singleton( );
            $params['source_contact_id']  =  $session->get( 'userID' );
@@ -127,26 +126,34 @@ function civicrm_api3_activity_create( $params ) {
         $caseActivityDAO->save();
       }
       _civicrm_api3_object_to_array( $activityBAO, $activityArray[$activityBAO->id]);
-      return civicrm_api3_create_success($activityArray,$params,$activityBAO);
+      return civicrm_api3_create_success($activityArray,$params,'activity','get',$activityBAO);
     }
-        } catch (PEAR_Exception $e) {
-        return civicrm_api3_create_error( $e->getMessage() );
-    } catch (Exception $e) {
-        return civicrm_api3_create_error( $e->getMessage() );
-    }
+
 }
 
-
+/*
+ * Return valid fields for API
+ */
 function civicrm_api3_activity_getfields( $params ) {
-    require_once 'CRM/Activity/BAO/Activity.php';
-    $bao = new CRM_Activity_BAO_Activity();
-    $fields =$bao->exportableFields('Activity');
+    $fields =  _civicrm_api_get_fields('activity') ;
     //activity_id doesn't appear to work so let's tell them to use 'id' (current focus is ensuring id works)
     $fields['id'] = $fields['activity_id'];
-    $fields['assignee_contact_id'] = 'assigned to';
-    $fields['activity_status_id'] = 'Status id';
     unset ($fields['activity_id']);
-    return civicrm_api3_create_success($fields ,$params,$bao);
+    $fields['assignee_contact_id'] = array('name' => 'assignee_id',
+                                           'title' => 'assigned to',
+                                           'type' => 1,
+                                           'FKClassName' => 'CRM_Activity_DAO_ActivityAssignment');
+    $fields['target_contact_id'] = array('name' => 'target_id',
+                                           'title' => 'Activity Target',
+                                           'type' => 1,
+                                           'FKClassName' => 'CRM_Activity_DAO_ActivityTarget');
+    $fields['activity_status_id'] = array('name' => 'status_id',
+                                           'title' => 'Status Id',
+                                           'type' => 1,);
+
+    require_once ('CRM/Core/BAO/CustomField.php');
+
+    return civicrm_api3_create_success($fields );
 }
 
 
@@ -162,13 +169,10 @@ function civicrm_api3_activity_getfields( $params ) {
  */
 
 function civicrm_api3_activity_get( $params ) {
-    _civicrm_api3_initialize( true );
-    try{
-
         civicrm_api3_verify_mandatory($params);
 
         if (!empty($params['contact_id'])){
-           $activities = CRM_Activity_BAO_Activity::getContactActivity( $params );
+           $activities = CRM_Activity_BAO_Activity::getContactActivity( $params['contact_id'] );
            //BAO function doesn't actually return a contact ID - hack api for now & add to test so when api re-write happens it won't get missed
            foreach ($activities as $key => $activityArray){
               $activities[$key]['id'] = $key ;
@@ -198,13 +202,8 @@ function civicrm_api3_activity_get( $params ) {
           }
         }
         //legacy custom data get - so previous formatted response is still returned too
-        return civicrm_api3_create_success( $activities ,$params);
+        return civicrm_api3_create_success( $activities ,$params,'activity','get');
 
-    } catch (PEAR_Exception $e) {
-        return civicrm_api3_create_error( $e->getMessage() );
-    } catch (Exception $e) {
-        return civicrm_api3_create_error( $e->getMessage() );
-    }
 }
 
 /**
@@ -216,16 +215,10 @@ function civicrm_api3_activity_get( $params ) {
  *
  * @access public
  *
- * @todo what are required mandatory fields? id?
- * @todo Erik Hommel 16 dec 2010 check permissions with utils function civicrm_api_permission_check
- * @todo Erik Hommel 16 dec 2010 check if civicrm_create_success is handled correctly with REST (should be fixed in utils function civicrm_create_success)
  * {@example ActivityDelete.php 0}
  */
 function civicrm_api3_activity_delete( $params )
 {
-    _civicrm_api3_initialize(true );
-    try{
-
         civicrm_api3_verify_mandatory($params);
         $errors = array( );
 
@@ -237,15 +230,11 @@ function civicrm_api3_activity_delete( $params )
         }
 
         if ( CRM_Activity_BAO_Activity::deleteActivity( $params ) ) {
-            return civicrm_api3_create_success( );
+            return civicrm_api3_create_success(1,$params,'activity','delete' );
         } else {
             return civicrm_api3_create_error(  'Could not delete activity'  );
         }
-    } catch (PEAR_Exception $e) {
-        return civicrm_api3_create_error( $e->getMessage() );
-    } catch (Exception $e) {
-        return civicrm_api3_create_error( $e->getMessage() );
-    }
+
 }
 
 
@@ -260,36 +249,32 @@ function civicrm_api3_activity_delete( $params )
 function _civicrm_api3_activity_check_params ( & $params)
 {
 
+   $contactIDFields = array_intersect_key($params, array('source_contact_id' => 1,'assignee_contact_id' => 1, 'target_contact_id' => 1));
+   if(!empty($contactIDFields)){
+   $contactIds = array();
+   foreach ($contactIDFields as $fieldname => $contactfield) {
+     if(empty($contactfield))break;
+     if(is_array($contactfield)) {
+       foreach ($contactfield as $contactkey => $contactvalue) {
+         $contactIds[$contactvalue] = $contactvalue;
+       }
+     }else{
+       $contactIds[$contactfield] = $contactfield;
+     }
+   }
 
-    $contactIds = array( 'source'   => CRM_Utils_Array::value( 'source_contact_id', $params ),
-                         'assignee' => CRM_Utils_Array::value( 'assignee_contact_id', $params ),
-                         'target'   => CRM_Utils_Array::value( 'target_contact_id', $params )
-                         );
-
-    foreach ( $contactIds as $key => $value ) {
-        if ( empty( $value ) ) {
-            continue;
-        }
-        $valueIds = array( $value );
-        if ( is_array( $value ) ) {
-            $valueIds = array( );
-            foreach ( $value as $id ) {
-                if ( $id ) $valueIds[$id] = $id;
-            }
-        }
-        if ( empty( $valueIds ) ) {
-            continue;
-        }
 
         $sql = '
 SELECT  count(*)
   FROM  civicrm_contact
- WHERE  id IN (' . implode( ', ', $valueIds ) . ' )';
-        if ( count( $valueIds ) !=  CRM_Core_DAO::singleValueQuery( $sql ) ) {
+ WHERE  id IN (' . implode( ', ', $contactIds ) . ' )';
+        if ( count( $contactIds ) !=  CRM_Core_DAO::singleValueQuery( $sql ) ) {
             return civicrm_api3_create_error( 'Invalid '. ucfirst($key) .' Contact Id' );
         }
-    }
 
+   }
+   
+   
     $activityIds = array( 'activity' => CRM_Utils_Array::value( 'id', $params ),
                           'parent'   => CRM_Utils_Array::value( 'parent_id', $params ),
                           'original' => CRM_Utils_Array::value( 'original_id', $params )
@@ -304,8 +289,7 @@ SELECT  count(*)
 
 
     require_once 'CRM/Core/PseudoConstant.php';
-    $activityTypes = CRM_Core_PseudoConstant::activityType( true, true, true, 'name', true );
-
+    $activityTypes = CRM_Core_PseudoConstant::activityType( true, true, false, 'name', true );
     $activityName   = CRM_Utils_Array::value( 'activity_name', $params );
     $activityTypeId = CRM_Utils_Array::value( 'activity_type_id', $params );
 
@@ -363,9 +347,6 @@ SELECT  count(*)
         return civicrm_api3_create_error('Invalid Activity Duration (in minutes)' );
     }
 
-    if ( CRM_Utils_Array::value( 'activity_date_time', $params ) ) {
-        $params['activity_date_time'] = CRM_Utils_Date::processDate( $params['activity_date_time'] );
-    }
 
      //if adding a new activity & date_time not set make it now
     if (!CRM_Utils_Array::value( 'id', $params ) &&

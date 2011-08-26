@@ -46,7 +46,7 @@ class CRM_Bridge_OG_Drupal {
         $groupParams               = $params;
         $groupParams['source']     = CRM_Bridge_OG_Utils::ogSyncName( $params['og_id'] );
         $groupParams['group_type'] = array( '2' => 1 );
-        self::updateCiviGroup( $groupParams, $op, $groupType );
+        self::updateCiviGroup( $groupParams, $op );
 
         if ( CRM_Bridge_OG_Utils::aclEnabled( ) ) {
             // next create or update the CiviCRM ACL group
@@ -75,10 +75,10 @@ class CRM_Bridge_OG_Drupal {
                 $params['group_type'] = $groupType;
             }
             
-            $group = civicrm_api('group', 'add', $params );
+
             $group = civicrm_group_add( $params );
             if ( ! civicrm_error( $group ) ) {
-                $params['group_id'] = $group['result'];
+                $params['group_id'] = $group['result']->id;
             }
         } else {
             // do this only if we have a valid id

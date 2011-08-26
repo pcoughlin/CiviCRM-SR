@@ -2015,7 +2015,6 @@ CREATE TABLE civicrm_dashboard (
      domain_id int unsigned NOT NULL   COMMENT 'Domain for dashboard',
      label varchar(255)    COMMENT 'dashlet title',
      url varchar(255)    COMMENT 'url in case of external dashlet',
-     content text    COMMENT 'dashlet content',
      permission varchar(255)    COMMENT 'Permission for the dashlet',
      permission_operator varchar(3)    COMMENT 'Permission Operator',
      column_no tinyint   DEFAULT 0 COMMENT 'column no for this dashlet',
@@ -2024,8 +2023,7 @@ CREATE TABLE civicrm_dashboard (
      is_fullscreen tinyint   DEFAULT 1 COMMENT 'Is Fullscreen?',
      is_active tinyint   DEFAULT 0 COMMENT 'Is this dashlet active?',
      is_reserved tinyint   DEFAULT 0 COMMENT 'Is this dashlet reserved?',
-     weight int   DEFAULT 0 COMMENT 'Ordering of the dashlets.',
-     created_date datetime    COMMENT 'When was content populated' 
+     weight int   DEFAULT 0 COMMENT 'Ordering of the dashlets.' 
 ,
     PRIMARY KEY ( id )
  
@@ -2680,7 +2678,9 @@ CREATE TABLE civicrm_dashboard_contact (
      is_minimized tinyint   DEFAULT 0 COMMENT 'Is Minimized?',
      is_fullscreen tinyint   DEFAULT 1 COMMENT 'Is Fullscreen?',
      is_active tinyint   DEFAULT 0 COMMENT 'Is this widget active?',
-     weight int   DEFAULT 0 COMMENT 'Ordering of the widgets.' 
+     weight int   DEFAULT 0 COMMENT 'Ordering of the widgets.',
+     content text    COMMENT 'dashlet content',
+     created_date datetime    COMMENT 'When was content populated' 
 ,
     PRIMARY KEY ( id )
  
@@ -3369,9 +3369,10 @@ CREATE TABLE civicrm_entity_tag (
 ,
     PRIMARY KEY ( id )
  
-    ,     INDEX index_entity(
-        entity_table
-      , entity_id
+    ,     UNIQUE INDEX UI_entity_id_entity_table_tag_id(
+        entity_id
+      , entity_table
+      , tag_id
   )
   
 ,      
@@ -3577,7 +3578,7 @@ CREATE TABLE civicrm_action_log (
      action_date_time datetime    COMMENT 'date time that the action was performed on.',
      is_error tinyint   DEFAULT 0 COMMENT 'Was there any error sending the reminder?',
      message text    COMMENT 'Description / text in case there was an error encountered.',
-     repetition_number int unsigned NOT NULL   COMMENT 'Keeps track of the sequence number of this repetition.' 
+     repetition_number int unsigned    COMMENT 'Keeps track of the sequence number of this repetition.' 
 ,
     PRIMARY KEY ( id )
  

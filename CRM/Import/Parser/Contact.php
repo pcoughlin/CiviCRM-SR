@@ -1406,7 +1406,7 @@ class CRM_Import_Parser_Contact extends CRM_Import_Parser
                         foreach ( $value as $county ) {
                             if( $county['county'] ) {
                                 $countyNames = CRM_Core_PseudoConstant::county( );
-                                if ( !in_array( $county['county'], $countyNames ) ) {
+                                if ( !empty( $county['county'] ) && !in_array( $county['county'], $countyNames ) ) {
                                     self::addToErrorMsg( ts('County input value not in county table: The County value appears to be invalid. It does not match any value in CiviCRM table of counties.'), $errorMessage );
                                 }
                             }
@@ -1714,7 +1714,7 @@ class CRM_Import_Parser_Contact extends CRM_Import_Parser
         }
         
         foreach ( $locationFields as $locKeys ) {
-            if ( is_array( $params[$locKeys] ) ) {
+            if ( is_array( CRM_Utils_Array::value( $locKeys, $params ) ) ) {
                 foreach ( $params[$locKeys] as $key => $value ) { 
                     if ( $modeFill ) {
                         $getValue = CRM_Utils_Array::retrieveValueRecursive( $contact, $locKeys );

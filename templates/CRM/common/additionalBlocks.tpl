@@ -88,10 +88,7 @@ function buildAdditionalBlocks( blockName, className ) {
 
     if ( blockName == 'Address' ) {
         checkLocation('address_' + currentInstance + '_location_type_id', true );
-        /* FIX: for IE, To get the focus after adding new address block on first element */
-        cj('#address_' + currentInstance + '_location_type_id').focus();
     }
-    
 }
 
 //select single for is_bulk & is_primary
