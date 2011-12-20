@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -191,7 +191,8 @@ class CRM_Contribute_Selector_Search extends CRM_Core_Selector_Base implements C
 
         $this->_query = new CRM_Contact_BAO_Query( $this->_queryParams, null, null, false, false,
                                                    CRM_Contact_BAO_Query::MODE_CONTRIBUTE );
-        $this->_query->_distinctComponentClause = " DISTINCT(civicrm_contribution.id)";
+        $this->_query->_distinctComponentClause = " civicrm_contribution.id";
+        $this->_query->_groupByComponentClause  = " GROUP BY civicrm_contribution.id ";
     }//end of constructor
 
     /**

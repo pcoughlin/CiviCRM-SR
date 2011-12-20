@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -389,8 +389,13 @@ class CRM_Contact_Form_Search extends CRM_Core_Form {
                 $tasks = $tasks + CRM_Contact_Task::optionalTaskTitle();
             }
 
-            $savedSearchValues = array( 'id' => $this->_ssID,
-                                        'name' => CRM_Contact_BAO_SavedSearch::getName( $this->_ssID, 'title' ) );
+            $search_custom_id = CRM_Core_DAO::getFieldValue( 'CRM_Contact_DAO_SavedSearch', 
+                                                             $this->_ssID, 
+                                                             'search_custom_id' );
+
+            $savedSearchValues = array( 'id'               => $this->_ssID,
+                                        'name'             => CRM_Contact_BAO_SavedSearch::getName( $this->_ssID, 'title' ),
+                                        'search_custom_id' => $search_custom_id );
             $this->assign_by_ref( 'savedSearch', $savedSearchValues );
             $this->assign( 'ssID', $this->_ssID );
         }
@@ -521,8 +526,8 @@ class CRM_Contact_Form_Search extends CRM_Core_Form {
         /**
          * set the varios class variables
          */
-        $this->_group           =& CRM_Core_PseudoConstant::group( );
-        $this->_groupIterator   =& CRM_Core_PseudoConstant::groupIterator( );
+        $this->_group           = CRM_Core_PseudoConstant::group( );
+        $this->_groupIterator   = CRM_Core_PseudoConstant::groupIterator( );
         $this->_tag             =  CRM_Core_BAO_Tag::getTags( );
         $this->_done            =  false;
 
@@ -600,7 +605,7 @@ class CRM_Contact_Form_Search extends CRM_Core_Form {
         if ( ! empty( $_POST ) && !$this->controller->isModal( ) ) {
             $this->_formValues = $this->controller->exportValues($this->_name); 
             $this->normalizeFormValues( );
-            $this->_params =& CRM_Contact_BAO_Query::convertFormValues( $this->_formValues );
+            $this->_params = CRM_Contact_BAO_Query::convertFormValues( $this->_formValues );
             $this->_returnProperties =& $this->returnProperties( );
 
             // also get the uf group id directly from the post value
@@ -617,7 +622,7 @@ class CRM_Contact_Form_Search extends CRM_Core_Form {
             $this->set( 'operator', $this->_operator );
         } else {
             $this->_formValues = $this->get( 'formValues' );
-            $this->_params =& CRM_Contact_BAO_Query::convertFormValues( $this->_formValues );
+            $this->_params = CRM_Contact_BAO_Query::convertFormValues( $this->_formValues );
             $this->_returnProperties =& $this->returnProperties( );
             if ( !empty( $this->_ufGroupID ) ) {
                 $this->set( 'id', $this->_ufGroupID );  
@@ -639,9 +644,9 @@ class CRM_Contact_Form_Search extends CRM_Core_Form {
 
                 //fix for CRM-1505
                 if ( CRM_Core_DAO::getFieldValue( 'CRM_Contact_DAO_SavedSearch', $this->_ssID, 'mapping_id' ) ) {
-                    $this->_params =& CRM_Contact_BAO_SavedSearch::getSearchParams( $this->_ssID );
+                    $this->_params = CRM_Contact_BAO_SavedSearch::getSearchParams( $this->_ssID );
                 } else {
-                    $this->_params =& CRM_Contact_BAO_Query::convertFormValues( $this->_formValues );
+                    $this->_params = CRM_Contact_BAO_Query::convertFormValues( $this->_formValues );
                 }
                 $this->_returnProperties =& $this->returnProperties( );
             } else {
@@ -660,6 +665,7 @@ class CRM_Contact_Form_Search extends CRM_Core_Form {
         $this->assign( 'id',
                        CRM_Utils_Array::value( 'uf_group_id', $this->_formValues ) );
         $operator = CRM_Utils_Array::value( 'operator', $this->_formValues, 'AND' );
+        $this->set( 'queryOperator', $operator );
         if ( $operator == 'OR' ) {
             $this->assign( 'operator', ts( 'OR' ) );
         } else {
@@ -693,7 +699,9 @@ class CRM_Contact_Form_Search extends CRM_Core_Form {
                      $this->_returnProperties,
                      $this->_action,
                      false, true,
-                     $this->_context );' );
+                     $this->_context,
+                     $this->_contextMenu );' );
+            
         } else {
             eval( '$selector = new ' . $this->_selectorName . 
                   '( $this->_params,
@@ -701,6 +709,9 @@ class CRM_Contact_Form_Search extends CRM_Core_Form {
                      null, false, null,
                      "search", "advanced" );' );
         }
+        
+        $selector->setKey( $this->controller->_key );
+
         $controller = new CRM_Contact_Selector_Controller( $selector ,
                                                            $this->get( CRM_Utils_Pager::PAGE_ID ),
                                                            $this->get( CRM_Utils_Sort::SORT_ID  ),
@@ -708,6 +719,7 @@ class CRM_Contact_Form_Search extends CRM_Core_Form {
                                                            $this,
                                                            CRM_Core_Selector_Controller::TRANSFER );
         $controller->setEmbedded( true );
+        $controller->setDynamicAction( true );
         
         if ( $this->_force ) {
 
@@ -727,6 +739,7 @@ class CRM_Contact_Form_Search extends CRM_Core_Form {
                                                                $sortID,
                                                                CRM_Core_Action::VIEW, $this, CRM_Core_Selector_Controller::TRANSFER );
             $controller->setEmbedded( true );
+            $controller->setDynamicAction( true );
         }
         
         $controller->moveFromSessionToTemplate();
@@ -827,7 +840,8 @@ class CRM_Contact_Form_Search extends CRM_Core_Form {
             // we'll ignore for now
             $config = CRM_Core_Config::singleton( );
             if ( $config->includeAlphabeticalPager ) {
-                if ($this->_reset || !$this->_sortByCharacter) {
+                if ( $this->_reset ||
+                     ( $this->_sortByCharacter === null || $this->_sortByCharacter == '' ) ) {
                     $aToZBar = CRM_Utils_PagerAToZ::getAToZBar( $selector, $this->_sortByCharacter );
                     $this->set( 'AToZBar', $aToZBar );
                 }
@@ -845,6 +859,7 @@ class CRM_Contact_Form_Search extends CRM_Core_Form {
                                                                $this,
                                                                $output );
             $controller->setEmbedded( true );
+            $controller->setDynamicAction( true );
             $controller->run();
         }
     }

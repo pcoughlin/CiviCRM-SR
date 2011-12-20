@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -32,7 +32,7 @@
  * @package CiviCRM_APIv2
  * @subpackage API_Activity
  * @copyright CiviCRM LLC (c) 2004-2011
- * @version $Id: Activity.php 33756 2011-04-19 09:06:24Z kurund $
+ * @version $Id: Activity.php 37506 2011-11-16 13:31:27Z kurund $
  *
  */
 
@@ -312,13 +312,18 @@ SELECT  count(*)
         }
     }
 
+    if ( ! $addMode && ! isset( $params['id'] )) {
+        return civicrm_create_error( ts( 'Required parameter "id" not found' ) );
+    }
+
+    // check for source contact id
+    if ( $addMode && empty( $params['source_contact_id'] ) ) {
+        return  civicrm_create_error( ts('Missing Source Contact') );
+    } 
+
     // check for activity subject if add mode
     if ( $addMode && ! isset( $params['subject'] ) ) {
         return civicrm_create_error( ts( 'Missing Subject' ) );
-    }
-
-    if ( ! $addMode && ! isset( $params['id'] )) {
-        return civicrm_create_error( ts( 'Required parameter "id" not found' ) );
     }
 
     if ( ! $addMode && $params['id'] && ! is_numeric ( $params['id'] )) {
@@ -380,11 +385,6 @@ SELECT  count(*)
         return civicrm_create_error( ts('Invalid Activity Duration (in minutes)') );
     }
         
-    // check for source contact id
-    if ( $addMode && empty( $params['source_contact_id'] ) ) {
-        return  civicrm_create_error( ts('Missing Source Contact') );
-    } 
-
     if ( $addMode && 
          !CRM_Utils_Array::value( 'activity_date_time', $params ) ) {
         $params['activity_date_time'] = CRM_Utils_Date::processDate( date( 'Y-m-d H:i:s' ) );
@@ -439,7 +439,9 @@ function _civicrm_activity_buildmailparams( $result, $activityTypeID ) {
     foreach ( $keys as $key ) {
         if ( is_array( $result[$key] ) ) {
             foreach ( $result[$key] as $key => $keyValue ) {
-                $params['target_contact_id'][]  = $keyValue['id'];
+                if ( ! empty( $keyValue['id'] ) ) {
+                    $params['target_contact_id'][]  = $keyValue['id'];
+                }
             }
         }
     }

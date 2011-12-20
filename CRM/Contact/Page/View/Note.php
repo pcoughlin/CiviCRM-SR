@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -105,7 +105,7 @@ class CRM_Contact_Page_View_Note extends CRM_Core_Page
         $mask  = CRM_Core_Action::mask( $permissions );
         
         $values =  array( );
-        $links  =& self::links( );
+        $links  = self::links( );
         $action = array_sum( array_keys( $links ) ) & $mask;
         
         $note->find( );

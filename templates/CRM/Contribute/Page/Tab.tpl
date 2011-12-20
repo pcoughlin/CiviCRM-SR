@@ -1,6 +1,6 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -64,6 +64,13 @@
                     {ts}No contributions have been recorded from this contact.{/ts}
             </div>
         {/if}
+
+        {if $recur}
+            <div class="solid-border-top">
+                <br /><label>{ts 1=$displayName}Recurring Contributions{/ts}</label>
+            </div>
+            {include file="CRM/Contribute/Page/ContributionRecur.tpl"}
+        {/if}             
 
         {if $honor}	
             <div class="solid-border-top">

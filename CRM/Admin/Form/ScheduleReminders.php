@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 3.4                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright (C) 2011 Marty Wright                                    |
  | Licensed to CiviCRM under the Academic Free License version 3.0.   |
@@ -59,18 +59,38 @@ class CRM_Admin_Form_ScheduleReminders extends CRM_Admin_Form
     public function buildQuickForm( ) 
     {
         parent::buildQuickForm( );
+        $this->_mappingID = $mappingID = null;
 
+        require_once 'CRM/Core/BAO/ActionSchedule.php';
         if ( $this->_action & (CRM_Core_Action::DELETE ) ) { 
-            $reminderName = CRM_Core_DAO::getFieldValue( 'CRM_Core_DAO_ActionSchedule', $this->_id, 'title' );
+            $reminderName = CRM_Core_DAO::getFieldValue( 'CRM_Core_DAO_ActionSchedule', 
+                                                         $this->_id, 'title' );
+            $this->_context = CRM_Utils_Request::retrieve( 'context', 'String', $this ); 
+            if ( $this->_context == 'event') {
+                $this->_eventId = CRM_Utils_Request::retrieve( 'eventId', 'Integer', $this );
+            }
             $this->assign('reminderName', $reminderName);
             return;
+        } elseif ( $this->_action & (CRM_Core_Action::UPDATE ) ) { 
+            $this->_mappingID = CRM_Core_DAO::getFieldValue( 'CRM_Core_DAO_ActionSchedule', 
+                                                             $this->_id, 'mapping_id' );
         }
         
-        $this->add( 'text', 'title', ts( 'Title' ), array( 'size'=> 45,'maxlength' => 128 ), true );
+        if ( !empty($_POST) && CRM_Utils_Array::value('entity', $_POST) ) {
+            $mappingID = $_POST['entity'][0];
+        } else if ( $this->_mappingID ) {
+            $mappingID = $this->_mappingID; 
+        }
 
-        require_once 'CRM/Core/BAO/ScheduleReminders.php';
-        list( $sel1, $sel2, $sel3, $sel4, $sel5 ) = CRM_Core_BAO_ScheduleReminders::getSelection(  ) ;
+        $this->add( 'text', 'title', ts( 'Title' ), 
+                    array( 'size'=> 45,'maxlength' => 128 ), true );
+
+        $selectionOptions = CRM_Core_BAO_ActionSchedule::getSelection( $mappingID );
+        extract( $selectionOptions );
         
+        $this->assign('entityMapping', json_encode($entityMapping));
+        $this->assign('recipientMapping', json_encode($recipientMapping));
+
         $sel =& $this->add('hierselect',
                            'entity',
                            ts('Entity'),
@@ -96,8 +116,8 @@ class CRM_Admin_Form_ScheduleReminders extends CRM_Admin_Form
         require_once 'CRM/Core/OptionGroup.php';
         $this->_freqUnits = array( 'hour' => 'hour' ) + CRM_Core_OptionGroup::values('recur_frequency_units');
         
-        require_once 'CRM/Core/BAO/ScheduleReminders.php';
-        $mappings = CRM_Core_BAO_ScheduleReminders::getMapping(  );
+        //pass the mapping ID in UPDATE mode
+        $mappings = CRM_Core_BAO_ActionSchedule::getMapping( $mappingID );
 
         $numericOptions = array( 0 => ts('0'), 1 => ts('1'), 2 => ts('2'), 3 => ts('3'), 4 => ts('4'), 5 => ts('5' ),
                                  6 => ts('6'), 7 => ts('7'), 8 => ts('8'), 9 => ts('9'), 10 => ts('10') );
@@ -107,6 +127,9 @@ class CRM_Admin_Form_ScheduleReminders extends CRM_Admin_Form
         foreach ($this->_freqUnits as $val => $label) {
             $freqUnitsDisplay[$val] = ts('%1(s)', array(1 => $label));
         }
+
+        $this->addDate( 'absolute_date', ts('Start Date'), false, array( 'formatType' => 'mailing' ) );
+
         //reminder_frequency
         $this->add( 'select', 'start_action_unit', ts( 'Frequency' ), $freqUnitsDisplay, true );
 
@@ -129,25 +152,36 @@ class CRM_Admin_Form_ScheduleReminders extends CRM_Admin_Form
         $this->add( 'select', 'end_date', ts( 'Date Field' ), $sel4, true );
 
         $recipient = 'activity_contacts';
-        if ( $this->_action & CRM_Core_Action::UPDATE ) {
+        $recipientListingOptions = array();
+
+        if ( $mappingID ) {
             $recipient = CRM_Core_DAO::getFieldValue( 'CRM_Core_DAO_ActionMapping',
-                                                      $this->_values['mapping_id'],
+                                                      $mappingID,
                                                       'entity_recipient' );
         }
 
         $this->add( 'select', 'recipient', ts( 'Recipient(s)' ), $sel5[$recipient],
                     false, array( 'onClick' => "showHideByValue('recipient','manual','recipientManual','table-row','select',false); showHideByValue('recipient','group','recipientGroup','table-row','select',false);") 
                     );
+
+        if ( CRM_Utils_Array::value('is_recipient_listing', $_POST) ) {
+            $recipientListingOptions = CRM_Core_BAO_ActionSchedule::getRecipientListing($_POST['entity'][0], $_POST['recipient'] );
+        } else if ( CRM_Utils_Array::value('recipient_listing', $this->_values) ) {
+            $recipientListingOptions = CRM_Core_BAO_ActionSchedule::getRecipientListing($this->_values['mapping_id'], $this->_values['recipient'] );
+        }
+        $recipientListing = $this->add( 'select', 'recipient_listing', ts('Recipient Listing'), $recipientListingOptions);
+        $recipientListing->setMultiple( true ); 
+        $this->add('hidden', 'is_recipient_listing', empty($recipientListingOptions)? false : true, array('id' => 'is_recipient_listing') );
         
         //autocomplete url
-        $dataUrl = CRM_Utils_System::url( "civicrm/ajax/rest",
-                                          "className=CRM_Contact_Page_AJAX&fnName=getContactList&json=1&context=activity&reset=1",
+        $dataUrl = CRM_Utils_System::url( 'civicrm/ajax/rest',
+                                          'className=CRM_Contact_Page_AJAX&fnName=getContactList&json=1&context=activity&reset=1',
                                           false, null, false );
 
         $this->assign( 'dataUrl',$dataUrl );
         //tokeninput url
-        $tokenUrl = CRM_Utils_System::url( "civicrm/ajax/checkemail",
-                                           "noemail=1",
+        $tokenUrl = CRM_Utils_System::url( 'civicrm/ajax/checkemail',
+                                           'noemail=1',
                                            false, null, false );
         $this->assign( 'tokenUrl', $tokenUrl );
         $this->add( 'text', 'recipient_manual_id', ts('Manual Recipients') );
@@ -178,14 +212,27 @@ class CRM_Admin_Form_ScheduleReminders extends CRM_Admin_Form
     static function formRule( $fields )
     {
         $errors = array( );
-        if ( $fields['entity'][1][0] == 0 ||
-             $fields['entity'][2][0] == 0) {
+        
+        if ( (array_key_exists(1, $fields['entity']) &&$fields['entity'][1][0] == 0 )||
+             (array_key_exists(2, $fields['entity']) &&$fields['entity'][2][0] == 0 ) ) {
             $errors['entity'] = ts('Please select appropriate value');
         }
         
         if ( CRM_Utils_Array::value( 'is_active', $fields ) &&  
              CRM_Utils_System::isNull( $fields['subject'] ) ) {
             $errors['subject'] = ts('Subject is a required field.');
+        }
+        
+        $listingOptions = CRM_Core_BAO_ActionSchedule::getRecipientListing($fields['entity'][0], CRM_Utils_Array::value('recipient', $fields));
+        $listingOptionsSelected = CRM_Utils_Array::value( 'recipient_listing', $fields );
+        if ( !empty($listingOptions) && empty($listingOptionsSelected) ) {
+            $errors['recipient_listing'] = ts('Recipient Listing is a required field.');
+        }
+
+        if ( !CRM_Utils_System::isNull( $fields['absolute_date'] ) ) {
+            if (CRM_Utils_Date::format( CRM_Utils_Date::processDate( $fields['absolute_date'], null ) ) < CRM_Utils_Date::format(date('YmdHi00')) ) {
+                $errors['absolute_date'] = ts('Absolute date cannot be earlier than the current time.');
+            }
         }
 
         if ( ! empty( $errors ) ) {
@@ -201,17 +248,28 @@ class CRM_Admin_Form_ScheduleReminders extends CRM_Admin_Form
             $defaults['is_active'] = 1;
         } else {
             $defaults = $this->_values;
-            $entityValue = explode( CRM_Core_DAO::VALUE_SEPARATOR, $defaults['entity_value'] );
-            $entityStatus = explode( CRM_Core_DAO::VALUE_SEPARATOR, $defaults['entity_status'] );
-            $defaults['entity'][0] = $defaults['mapping_id'];
+            $entityValue = explode( CRM_Core_DAO::VALUE_SEPARATOR, 
+                                    CRM_Utils_Array::value( 'entity_value', $defaults ));
+            $entityStatus = explode( CRM_Core_DAO::VALUE_SEPARATOR, 
+                                     CRM_Utils_Array::value( 'entity_status', $defaults ));
+            $defaults['entity'][0] = CRM_Utils_Array::value( 'mapping_id', $defaults );
             $defaults['entity'][1] = $entityValue;
             $defaults['entity'][2] = $entityStatus;
-            $defaults['text_message'] = $defaults['body_text'] ;
-            $defaults['html_message'] = $defaults['body_html'] ;
-            $defaults['template'] = $defaults['msg_template_id'];
-            if ( $defaults['group_id'] ) {
+            if ( $absoluteDate = CRM_Utils_Array::value( 'absolute_date', $defaults ) ) {
+                list( $date, $time ) = CRM_Utils_Date::setDateDefaults( $absoluteDate );
+                $defaults['absolute_date'] = $date;
+            }
+
+            if ( $recipientListing = CRM_Utils_Array::value( 'recipient_listing', $defaults ) ) {
+                $defaults['recipient_listing']= explode( CRM_Core_DAO::VALUE_SEPARATOR, 
+                                                         $recipientListing);
+            }
+            $defaults['text_message'] = CRM_Utils_Array::value( 'body_text', $defaults );
+            $defaults['html_message'] = CRM_Utils_Array::value( 'body_html', $defaults );
+            $defaults['template'] = CRM_Utils_Array::value( 'msg_template_id', $defaults );
+            if ( CRM_Utils_Array::value( 'group_id', $defaults ) ) {
                 $defaults['recipient'] = 'group';
-            } elseif ( $defaults['recipient_manual'] ) {
+            } elseif ( CRM_Utils_Array::value( 'recipient_manual', $defaults ) ) {
                 $defaults['recipient'] = 'manual';
                 $recipients = array( );
                 foreach ( explode(',', $defaults['recipient_manual']) as $cid ) {
@@ -235,39 +293,65 @@ class CRM_Admin_Form_ScheduleReminders extends CRM_Admin_Form
     {
         if ( $this->_action & CRM_Core_Action::DELETE ) {
             // delete reminder
-            CRM_Core_BAO_ScheduleReminders::del( $this->_id );
+            CRM_Core_BAO_ActionSchedule::del( $this->_id );
             CRM_Core_Session::setStatus( ts('Selected Reminder has been deleted.') );
+            if ( $this->_context == 'event' && $this->_eventId ) {
+                $url = CRM_Utils_System::url( 'civicrm/event/manage/reminder', 
+                                              "reset=1&action=update&id={$this->_eventId}" );
+                $session = CRM_Core_Session::singleton( ); 
+                $session->pushUserContext( $url );
+            }
             return;
         }
         $values = $this->controller->exportValues( $this->getName() );
 
-        $keys = array('title', 'start_action_offset' ,'start_action_unit',
-                      'start_action_condition', 'start_action_date', 
-                      'repetition_frequency_unit',
-                      'repetition_frequency_interval',
-                      'end_frequency_unit',
-                      'end_frequency_interval',
-                      'end_action', 'end_date',
+        $keys = array('title',
                       'subject',
+                      'absolute_date',
                       'group_id'
                       );
-        
         foreach ( $keys as $key ) {
             $params[$key] = CRM_Utils_Array::value( $key, $values );
         }
+
+        $moreKeys = array('start_action_offset' ,'start_action_unit',
+                          'start_action_condition', 'start_action_date', 
+                          'repetition_frequency_unit',
+                          'repetition_frequency_interval',
+                          'end_frequency_unit',
+                          'end_frequency_interval',
+                          'end_action', 'end_date',
+                          );
         
+        if ( $absoluteDate = CRM_Utils_Array::value( 'absolute_date', $params ) ) {
+            $params['absolute_date'] = CRM_Utils_Date::processDate( $absoluteDate );
+            foreach ( $moreKeys as $mkey ) {
+                $params[$mkey] = 'null';
+            }                   
+        } else {
+            $params['absolute_date'] = 'null';
+            foreach ( $moreKeys as $mkey ) {
+                $params[$mkey] = CRM_Utils_Array::value( $mkey, $values );
+            }
+        } 
+                
         $params['body_text'] = CRM_Utils_Array::value( 'text_message', $values );
         $params['body_html'] = CRM_Utils_Array::value( 'html_message', $values );
-
+        
         if ( CRM_Utils_Array::value( 'recipient', $values ) == 'manual' ) {
             $params['recipient_manual'] = CRM_Utils_Array::value( 'recipient_manual_id', $values );
-            $params['group_id'] = $params['recipient'] = 'null';
+            $params['group_id'] = $params['recipient'] = $params['recipient_listing'] = 'null';
         } else if ( CRM_Utils_Array::value( 'recipient', $values ) == 'group' ) {
             $params['group_id'] = $values['group_id'];
-            $params['recipient_manual'] = $params['recipient'] = 'null';
+            $params['recipient_manual'] = $params['recipient'] = $params['recipient_listing'] = 'null';
+        } else if ( !CRM_Utils_System::isNull( $values['recipient_listing'] ) ) {
+            $params['recipient'] = CRM_Utils_Array::value( 'recipient', $values );
+            $params['recipient_listing'] = implode( CRM_Core_DAO::VALUE_SEPARATOR, 
+                                                    CRM_Utils_Array::value( 'recipient_listing', $values ) );
+            $params['group_id'] = $params['recipient_manual'] = 'null';
         } else {
             $params['recipient'] = CRM_Utils_Array::value( 'recipient', $values );
-            $params['group_id'] = $params['recipient_manual'] = 'null';
+            $params['group_id'] = $params['recipient_manual'] = $params['recipient_listing'] = 'null';
         }
 
         $params['mapping_id'] = $values['entity'][0];
@@ -278,7 +362,7 @@ class CRM_Admin_Form_ScheduleReminders extends CRM_Admin_Form
             $params[$key] = implode( CRM_Core_DAO::VALUE_SEPARATOR, $$key );
         }
 
-        $params['is_active' ] =  CRM_Utils_Array::value( 'is_active', $values, 0 );
+        $params['is_active'] = CRM_Utils_Array::value( 'is_active', $values, 0 );
         $params['is_repeat'] = CRM_Utils_Array::value( 'is_repeat', $values, 0 );
 
         if ( CRM_Utils_Array::value( 'is_repeat', $values ) == 0 ) {
@@ -338,11 +422,13 @@ class CRM_Admin_Form_ScheduleReminders extends CRM_Admin_Form
             $params['msg_template_id'] = CRM_Utils_Array::value( 'template', $values );
         }
         
-        CRM_Core_BAO_ScheduleReminders::add($params, $ids);
+        CRM_Core_BAO_ActionSchedule::add($params, $ids);
 
-        $status = ts( "Your new Reminder titled %1 has been saved." , array( 1 => "<strong>{$values['title']}</strong>") );
+        $status = ts( "Your new Reminder titled %1 has been saved." , 
+                      array( 1 => "<strong>{$values['title']}</strong>") );
         if ( $this->_action & CRM_Core_Action::UPDATE ) { 
-            $status = ts( "Your Reminder titled %1 has been updated." , array( 1 => "<strong>{$values['title']}</strong>") );
+            $status = ts( "Your Reminder titled %1 has been updated." , 
+                          array( 1 => "<strong>{$values['title']}</strong>") );
         }
         CRM_Core_Session::setStatus( $status );
 

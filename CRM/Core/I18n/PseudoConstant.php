@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -55,7 +55,7 @@ class CRM_Core_I18n_PseudoConstant
 
     static function longForShort($short)
     {
-        $longForShortMapping =& self::longForShortMapping();
+        $longForShortMapping = self::longForShortMapping();
         return $longForShortMapping[$short];
     }
 

@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -70,6 +70,8 @@ class CRM_Case_Form_ActivityView extends CRM_Core_Form
         $this->assign('contactID', $contactID );
         $this->assign('caseID', $caseID );
         $this->assign('type', $type );
+        // CRM-9145
+        $this->assign( 'activityID', $activityID );
 
         require_once 'CRM/Case/XMLProcessor/Report.php';
         $xmlProcessor = new CRM_Case_XMLProcessor_Report( );
@@ -151,7 +153,7 @@ class CRM_Case_Form_ActivityView extends CRM_Core_Form
         require_once 'CRM/Contact/BAO/Contact.php';
         $recentContactDisplay = CRM_Contact_BAO_Contact::displayName( $recentContactId );
         // add the recently created Activity
-        $activityTypes = CRM_Core_Pseudoconstant::activityType( true, true );
+        $activityTypes = CRM_Core_PseudoConstant::activityType( true, true );
         
         $title = "";
         if ( isset($activitySubject) ) {

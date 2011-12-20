@@ -2,7 +2,7 @@
 
   /*
    +----------------------------------------------------------------------------+
-   | PayflowPro Core Payment Module for CiviCRM version 4.0                     |
+   | PayflowPro Core Payment Module for CiviCRM version 4.1                     |
    +----------------------------------------------------------------------------+
    | Licensed to CiviCRM under the Academic Free License version 3.0            |
    |                                                                            |
@@ -255,8 +255,7 @@ class CRM_Core_Payment_PayflowPro extends CRM_Core_Payment {
             
         }
         
- 		
-        
+        CRM_Utils_Hook::alterPaymentProcessorParams( $this, $params, $payflow_query_array ); 
         $payflow_query = $this->convert_to_nvp( $payflow_query_array );
         
         /*
@@ -372,7 +371,7 @@ class CRM_Core_Payment_PayflowPro extends CRM_Core_Payment {
      * Produces error message and returns from class
      */
     function &errorExit ( $errorCode = null, $errorMessage = null ) {
-        $e =& CRM_Core_Error::singleton( );
+        $e = CRM_Core_Error::singleton( );
         if ( $errorCode ) {
             $e->push( $errorCode, 0, null, $errorMessage );
         } else {

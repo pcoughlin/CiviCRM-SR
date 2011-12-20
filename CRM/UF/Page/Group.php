@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -228,7 +228,7 @@ class CRM_UF_Page_Group extends CRM_Core_Page
 
         // not sure how to circumvent our own navigation system to generate the right form url
         $urlReplaceWith = 'civicrm/profile/create&amp;gid='.$gid.'&amp;reset=1';
-        if ( $config->userFramework == 'Drupal' && $config->cleanURL ) {
+        if ( $config->userSystem->is_drupal && $config->cleanURL ) {
             $urlReplaceWith = 'civicrm/profile/create?gid='.$gid.'&amp;reset=1';
         }
         $profile = str_replace( 'civicrm/admin/uf/group', $urlReplaceWith, $profile );
@@ -242,6 +242,8 @@ class CRM_UF_Page_Group extends CRM_Core_Page
         // add jquery files
         $profile = CRM_Utils_String::addJqueryFiles( $profile );
         
+        // prevent jquery conflict
+        $profile .= '<script type="text/javascript">jQuery.noConflict(true);</script>'; 
         $this->assign('profile', htmlentities($profile, ENT_NOQUOTES, 'UTF-8'));
         //get the title of uf group
         if ($gid) {

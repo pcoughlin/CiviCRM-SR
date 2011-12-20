@@ -1,6 +1,6 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -56,6 +56,7 @@
 	<td>
 	{$form.contribution_pay_later.html}&nbsp;{$form.contribution_pay_later.label}<br />
 	{$form.contribution_recurring.html}&nbsp;{$form.contribution_recurring.label}<br />
+        {$form.contribution_recurring_isnull.html}&nbsp;{$form.contribution_recurring_isnull.label}<br />
 	{$form.contribution_test.html}&nbsp;{$form.contribution_test.label}</td>
 </tr>
 <tr>

@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -105,20 +105,20 @@ class CRM_Contribute_Form_AdditionalInfo
         // add various amounts
         $element =& $form->add( 'text', 'non_deductible_amount', ts('Non-deductible Amount'),
                                 $attributes['non_deductible_amount'] );
-        $form->addRule('non_deductible_amount', ts('Please enter a valid amount.'), 'money');
+        $form->addRule('non_deductible_amount', ts('Please enter a valid monetary value for Non-deductible Amount.'), 'money');
         
         if ( $form->_online ) {
             $element->freeze( );
         }
         $element =& $form->add( 'text', 'fee_amount', ts('Fee Amount'), 
                                 $attributes['fee_amount'] );
-        $form->addRule('fee_amount', ts('Please enter a valid amount.'), 'money');
+        $form->addRule('fee_amount', ts('Please enter a valid monetary value for Fee Amount.'), 'money');
         if ( $form->_online ) {
             $element->freeze( );
         }
         $element =& $form->add( 'text', 'net_amount', ts('Net Amount'),
                                 $attributes['net_amount'] );
-        $form->addRule('net_amount', ts('Please enter a valid amount.'), 'money');
+        $form->addRule('net_amount', ts('Please enter a valid monetary value for Net Amount.'), 'money');
         if ( $form->_online ) {
             $element->freeze( );
         }
@@ -331,19 +331,26 @@ class CRM_Contribute_Form_AdditionalInfo
         // retrieve premium product name and assigned fulfilled
         // date to template
         if ( CRM_Utils_Array::value( 'hidden_Premium', $params ) ) {
-            if (  CRM_Utils_Array::value( $params['product_name'][0], $form->_options ) ) {
-                $params['product_option'] = $form->_options[$params['product_name'][0]][$params['product_name'][1]];
-            }
-            //fix for crm-4584
-            if(!empty($params['product_name'])){
+            if ( isset( $params['product_name'] ) && 
+                 is_array( $params['product_name'] ) &&
+                 ! empty( $params['product_name'] ) ) {
                 require_once 'CRM/Contribute/DAO/Product.php';
                 $productDAO = new CRM_Contribute_DAO_Product();
                 $productDAO->id = $params['product_name'][0];
                 $productDAO->find(true);
                 $params['product_name'] = $productDAO->name;
                 $params['product_sku']  = $productDAO->sku;
+                     
+                if ( CRM_Utils_Array::value( $params['product_name'][0],
+                                             $form->_options ) ) {
+                    $params['product_option'] = 
+                        $form->_options[$params['product_name'][0]][$params['product_name'][1]];
+                }
             }
-            $this->assign('fulfilled_date', CRM_Utils_Date::processDate( $params['fulfilled_date'] ) );
+            
+            if ( CRM_Utils_Array::value( 'fulfilled_date', $params ) ) {
+                $this->assign('fulfilled_date', CRM_Utils_Date::processDate( $params['fulfilled_date'] ) );
+            }
         }
         
         $this->assign( 'ccContribution', $ccContribution );

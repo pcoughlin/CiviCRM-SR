@@ -81,14 +81,19 @@
      <access_arguments>access CiviCRM</access_arguments>
   </item>
   <item>
-     <path>civicrm/api/doc</path>
+     <path>civicrm/api/explorer</path>
      <page_callback>CRM_Utils_REST::ajaxDoc</page_callback>
+     <access_arguments>access CiviCRM</access_arguments>
+  </item>
+  <item>
+     <path>civicrm/api/doc</path>
+     <page_callback>CRM_Utils_REST::APIDoc</page_callback>
      <access_arguments>access CiviCRM</access_arguments>
   </item>
   <item>
      <path>civicrm/ajax/rest</path>
      <page_callback>CRM_Utils_REST::ajax</page_callback>
-     <access_arguments>access CiviCRM</access_arguments>
+     <access_arguments>access CiviCRM;access AJAX API</access_arguments>
   </item>
   <item>
      <path>civicrm/api/json</path>

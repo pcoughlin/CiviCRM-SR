@@ -1,6 +1,6 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -99,6 +99,17 @@
 	    <td colspan="2">
                <fieldset><legend>{ts}Renewal Payment and Receipt{/ts}</legend>
                  <table class="form-layout-compressed">
+                     <tr id="defaultNumTerms" class="crm-member-membershiprenew-form-block-default-num_terms">	
+                        <td colspan="2" class="description">
+                            {ts}Renewal extends membership end date by one membership period{/ts}
+                            &nbsp; <a id="changeTermsLink" href='#' onclick='changeNumTerms(); return false;'>{ts}change{/ts}</a>
+                        </td>
+                     </tr>
+                     <tr id="changeNumTerms" class="crm-member-membershiprenew-form-block-change-num_terms">	
+                        <td class="label">{$form.num_terms.label}</td>
+                        <td>{$form.num_terms.html|crmReplace:class:two} {ts}membership periods{/ts}<br />
+                        <span class="description">{ts}Extend the membership end date by this many membership periods. Make sure the appropriate corresponding fee is entered below.{/ts}</span></td>
+                     </tr>
                     <tr class="crm-member-membershiprenew-form-block-contribution_type_id">	
                        <td class="label">{$form.contribution_type_id.label}</td>
                        <td>{$form.contribution_type_id.html}<br />
@@ -218,6 +229,7 @@
 <script type="text/javascript">
 cj(document).ready(function() {
 	cj('#membershipOrgType').hide(); 
+	cj('#changeNumTerms').hide();
 	{/literal}
 		buildCustomData( '{$customDataType}' );
 		{if $customDataSubType}
@@ -244,6 +256,11 @@ function adjustMembershipOrgType( )
 	cj('#membershipOrgType').show();		    	    
 	cj('#changeMembershipOrgType').hide();
 }
+function changeNumTerms( )
+{
+	cj('#changeNumTerms').show();		    	    
+	cj('#defaultNumTerms').hide();    
+}
 cj( function( ) {
     cj('#record_contribution').click( function( ) {
         if ( cj(this).attr('checked') ) {
@@ -269,7 +286,8 @@ function setPaymentBlock( ) {
     
     cj.post( dataUrl, {mtype: memType}, function( data ) {
         cj("#contribution_type_id").val( data.contribution_type_id );
-        cj("#total_amount").val( data.total_amount );
+        var renewTotal = data.total_amount * cj("#num_terms").val();
+        cj("#total_amount").val( renewTotal.toFixed(2) );
     }, 'json');    
 }
 </script>

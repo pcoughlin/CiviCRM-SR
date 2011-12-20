@@ -1,6 +1,6 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -24,7 +24,10 @@
  +--------------------------------------------------------------------+
 *}
 <div id="pricesetTotal" class="crm-section section-pricesetTotal">
-	<div class="label" id="pricelabel"><label>Total Fee(s)</label></div>
+	<div class="label" id="pricelabel"><label>
+         {if ( $extends eq 'Contribution' ) || ( $extends eq 'Membership' )}
+           {ts}Total Amount{/ts}{else}{ts}Total Fee(s){/ts}
+         {/if}</label></div>
 	<div class="content view-value" id="pricevalue" ></div>
 </div>
 
@@ -40,7 +43,11 @@ var priceSet = price = Array( );
 cj("input,#priceset select,#priceset").each(function () {
 
   if ( cj(this).attr('price') ) {
-  switch( cj(this).attr('type') ) {
+  var eleType =  cj(this).attr('type');
+  if ( this.tagName == 'SELECT' ) {
+    eleType = 'select-one';
+  } 
+  switch( eleType ) {
     
   case 'checkbox':
     

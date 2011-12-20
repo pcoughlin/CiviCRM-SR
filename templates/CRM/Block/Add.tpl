@@ -1,6 +1,6 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -55,6 +55,9 @@
     <input type="hidden" name="email[1][location_type_id]" value="{$primaryLocationType}" />
     <input type="hidden" name="email[1][is_primary]" value="1" />
     <input type="hidden" name="ct" value="Individual" />
+    <input type="hidden" name="email_greeting_id" value="{$email_greeting_id}" />
+    <input type="hidden" name="postal_greeting_id" value="{$postal_greeting_id}" />
+    <input type="hidden" name="addressee_id" value="{$addressee_id}" />
 </div>
 
 <div class="form-item"><input type="submit" name="_qf_Contact_next" value="{ts}Save{/ts}" class="form-submit" /></div>

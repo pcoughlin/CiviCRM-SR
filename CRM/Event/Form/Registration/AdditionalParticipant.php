@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -644,6 +644,10 @@ class CRM_Event_Form_Registration_AdditionalParticipant extends CRM_Event_Form_R
                         $this->_lineItem[] = $lineItem;
                     }
                 }
+            }
+
+            if ( array_key_exists('participant_role', $params ) ) {
+                $params['participant_role_id'] = $params['participant_role'];
             }
             
             if ( ! CRM_Utils_Array::value( 'participant_role_id', $params ) && $this->_values['event']['default_role_id'] ) {

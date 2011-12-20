@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -138,7 +138,7 @@ class CRM_Contact_Form_Search_Builder extends CRM_Contact_Form_Search
         $fields = CRM_Contact_BAO_Contact::exportableFields( 'All', false, true );
         
         require_once 'CRM/Core/Component.php';
-        $compomentFields =& CRM_Core_Component::getQueryFields( );
+        $compomentFields = CRM_Core_Component::getQueryFields( );
         require_once 'CRM/Activity/BAO/Activity.php';
         $activityFields = CRM_Activity_BAO_Activity::exportableFields( );
         $compomentFields = array_merge( $compomentFields, $activityFields );
@@ -231,11 +231,11 @@ class CRM_Contact_Form_Search_Builder extends CRM_Contact_Form_Search
                             $inVal = trim( $v[2] );
                             //checking for format to avoid db errors
                             if ( $type == 'Int' ) {
-                                if (!preg_match( '/^[(]([A-Za-z0-9\,]+)[)]$/', $inVal) ) {
+                                if (! preg_match( '/^[(]([A-Za-z0-9\,]+)[)]$/', $inVal) ) {
                                     $errorMsg["value[$v[3]][$v[4]]"] = ts("Please enter correct Data ( in valid format ).");
                                 }
                             } else {
-                                if (!preg_match( '/^[(]([A-Za-z0-9åäöÅÄÖüÜœŒæÆøØ\,\s]+)[)]$/', $inVal) ) {
+                                if (! preg_match( '/^[(]([A-Za-z0-9åäöÅÄÖüÜœŒæÆøØ\,\s]+)[)]$/', $inVal) ) {
                                     $errorMsg["value[$v[3]][$v[4]]"] = ts("Please enter correct Data ( in valid format ).");
                                 }
                             }
@@ -349,8 +349,9 @@ class CRM_Contact_Form_Search_Builder extends CRM_Contact_Form_Search
         // we dont want to store the sortByCharacter in the formValue, it is more like 
         // a filter on the result set
         // this filter is reset if we click on the search button
-        if ( $this->_sortByCharacter && empty( $_POST ) ) {
-            if ( $this->_sortByCharacter == 1 ) {
+        if ( $this->_sortByCharacter !== null
+             && empty( $_POST ) ) {
+            if ( strtolower( $this->_sortByCharacter ) == 'all' ) {
                 $this->_formValues['sortByCharacter'] = null;
             } else {
                 $this->_formValues['sortByCharacter'] = $this->_sortByCharacter;

@@ -1,6 +1,6 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -59,9 +59,32 @@
   {if $taskName eq 'Export Contacts' OR $component eq false}
   <div class="crm-section crm-export-mergeOptions-section">
     <div class="label crm-label-mergeOptions">{ts}Merge Options{/ts} {help id="id-export_merge_options"}</div>
-    <div class="content crm-content-mergeSameAddress">
-        &nbsp;{$form.merge_same_address.html}
+    <div class="content crm-content-mergeOptions">
+        &nbsp;{$form.mergeOption.html}
     </div>
+    <div id='greetings' class="content crm-content-greetings class='hiddenElement'">
+      <table class="form-layout-compressed">
+        <tr>
+           <td>{$form.postal_greeting.label}</td>
+           <td>{$form.postal_greeting.html}</td>
+        </tr>
+        <tr id='postal_greeting_other_wrapper' class='hiddenElement'>
+           <td>{$form.postal_greeting_other.label}</td>
+           <td>{$form.postal_greeting_other.html}</td>
+        </tr>
+        <tr><td></td><td></td></tr>
+        <tr>
+           <td>{$form.addressee.label}</td>
+           <td>{$form.addressee.html}</td>
+        </tr>
+        <tr id='addressee_other_wrapper' class='hiddenElement'>
+           <td>{$form.addressee_other.label}</td>
+           <td>{$form.addressee_other.html}</td>
+        </tr>
+      </table>
+      <div class="clear">&nbsp;</div>
+    </div>
+
     <div class="content crm-content-mergeSameHousehold">
         &nbsp;{$form.merge_same_household.html}
     </div>
@@ -96,6 +119,36 @@
 	  hide('map');
 	}
      } 
-   showMappingOption( );
+     showMappingOption( );
+
+     var matchingContacts = '';
+     {/literal}{if $matchingContacts}{literal}
+       matchingContacts = {/literal}'{$matchingContacts}'{literal};
+     {/literal}{/if}{literal}
+
+     function showGreetingOptions( )
+     {
+        var mergeAddress = cj( "input[name='mergeOption']:checked" ).val( );
+	
+        if ( mergeAddress == 1 ) {
+            cj( "#greetings" ).show( );
+        } else {
+            cj( "#greetings" ).hide( );
+	}
+     }
+
+     function showOther( ele ) 
+     {
+        if ( cj('option:selected', ele).text( ) == '{/literal}{ts}Other{/ts}{literal}' ) {
+	   cj('#' + cj(ele).attr('id') + '_other_wrapper').show( );  
+        } else {	
+          cj('#' + cj(ele).attr('id') + '_other').val('');
+	  cj('#' + cj(ele).attr('id') + '_other_wrapper').hide( );
+	}
+     }
+
+     showGreetingOptions( );
+     showOther(cj('#postal_greeting'));
+     showOther(cj('#addressee'));
   </script>
 {/literal}

@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -34,7 +34,7 @@
  * @subpackage API_Membership
  *  
  * @copyright CiviCRM LLC (c) 2004-2011
- * @version $Id: MembershipContact.php 34772 2011-06-09 15:04:53Z deepak $
+ * @version $Id: MembershipContact.php 37506 2011-11-16 13:31:27Z kurund $
  */
 
 /**
@@ -247,7 +247,7 @@ function _civicrm_membership_format_params( &$params, &$values, $create=false)
 {
     require_once "CRM/Member/DAO/Membership.php";
     require_once "CRM/Member/PseudoConstant.php";
-    $fields =& CRM_Member_DAO_Membership::fields( );
+    $fields = CRM_Member_DAO_Membership::fields( );
     _civicrm_store_values( $fields, $params, $values );
     
     foreach ($params as $key => $value) {

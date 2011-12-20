@@ -1,7 +1,7 @@
 <?php
 /*
 +--------------------------------------------------------------------+
-| CiviCRM version 4.0                                                |
+| CiviCRM version 4.1                                                |
 +--------------------------------------------------------------------+
 | Copyright CiviCRM LLC (c) 2004-2011                                |
 +--------------------------------------------------------------------+
@@ -117,6 +117,18 @@ class CRM_Dedupe_DAO_RuleGroup extends CRM_Core_DAO
      */
     public $name;
     /**
+     * Label of the rule group
+     *
+     * @var string
+     */
+    public $title;
+    /**
+     * Is this a reserved rule - a rule group that has been optimized and cannot be changed by the admin
+     *
+     * @var boolean
+     */
+    public $is_reserved;
+    /**
      * class constructor
      *
      * @access public
@@ -170,6 +182,17 @@ class CRM_Dedupe_DAO_RuleGroup extends CRM_Core_DAO
                     'maxlength' => 64,
                     'size' => CRM_Utils_Type::BIG,
                 ) ,
+                'title' => array(
+                    'name' => 'title',
+                    'type' => CRM_Utils_Type::T_STRING,
+                    'title' => ts('Title') ,
+                    'maxlength' => 255,
+                    'size' => CRM_Utils_Type::HUGE,
+                ) ,
+                'is_reserved' => array(
+                    'name' => 'is_reserved',
+                    'type' => CRM_Utils_Type::T_BOOLEAN,
+                ) ,
             );
         }
         return self::$_fields;
@@ -204,7 +227,7 @@ class CRM_Dedupe_DAO_RuleGroup extends CRM_Core_DAO
     {
         if (!(self::$_import)) {
             self::$_import = array();
-            $fields = & self::fields();
+            $fields = self::fields();
             foreach($fields as $name => $field) {
                 if (CRM_Utils_Array::value('import', $field)) {
                     if ($prefix) {
@@ -227,7 +250,7 @@ class CRM_Dedupe_DAO_RuleGroup extends CRM_Core_DAO
     {
         if (!(self::$_export)) {
             self::$_export = array();
-            $fields = & self::fields();
+            $fields = self::fields();
             foreach($fields as $name => $field) {
                 if (CRM_Utils_Array::value('export', $field)) {
                     if ($prefix) {

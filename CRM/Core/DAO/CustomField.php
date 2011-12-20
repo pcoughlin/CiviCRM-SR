@@ -1,7 +1,7 @@
 <?php
 /*
 +--------------------------------------------------------------------+
-| CiviCRM version 4.0                                                |
+| CiviCRM version 4.1                                                |
 +--------------------------------------------------------------------+
 | Copyright CiviCRM LLC (c) 2004-2011                                |
 +--------------------------------------------------------------------+
@@ -249,6 +249,12 @@ class CRM_Core_DAO_CustomField extends CRM_Core_DAO
      */
     public $option_group_id;
     /**
+     * Stores Contact Get API params contact reference custom fields. May be used for other filters in the future.
+     *
+     * @var string
+     */
+    public $filter;
+    /**
      * class constructor
      *
      * @access public
@@ -440,6 +446,13 @@ class CRM_Core_DAO_CustomField extends CRM_Core_DAO
                     'name' => 'option_group_id',
                     'type' => CRM_Utils_Type::T_INT,
                 ) ,
+                'filter' => array(
+                    'name' => 'filter',
+                    'type' => CRM_Utils_Type::T_STRING,
+                    'title' => ts('Filter') ,
+                    'maxlength' => 255,
+                    'size' => CRM_Utils_Type::HUGE,
+                ) ,
             );
         }
         return self::$_fields;
@@ -452,8 +465,7 @@ class CRM_Core_DAO_CustomField extends CRM_Core_DAO
      */
     function getTableName()
     {
-        global $dbLocale;
-        return self::$_tableName . $dbLocale;
+        return CRM_Core_DAO::getLocaleTableName(self::$_tableName);
     }
     /**
      * returns if this table needs to be logged
@@ -475,7 +487,7 @@ class CRM_Core_DAO_CustomField extends CRM_Core_DAO
     {
         if (!(self::$_import)) {
             self::$_import = array();
-            $fields = & self::fields();
+            $fields = self::fields();
             foreach($fields as $name => $field) {
                 if (CRM_Utils_Array::value('import', $field)) {
                     if ($prefix) {
@@ -498,7 +510,7 @@ class CRM_Core_DAO_CustomField extends CRM_Core_DAO
     {
         if (!(self::$_export)) {
             self::$_export = array();
-            $fields = & self::fields();
+            $fields = self::fields();
             foreach($fields as $name => $field) {
                 if (CRM_Utils_Array::value('export', $field)) {
                     if ($prefix) {

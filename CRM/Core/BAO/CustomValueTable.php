@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -94,7 +94,7 @@ class CRM_Core_BAO_CustomValueTable
 
                                 CRM_Utils_Array::lookupValue( $states, 'state_province',
                                                               CRM_Core_PseudoConstant::stateProvince(), true );
-                                if ( !$states['state_province_id'] ) {
+                                if ( !CRM_Utils_Array::value( 'state_province_id' , $states ) ) {
                                     CRM_Utils_Array::lookupValue( $states, 'state_province',
                                                                   CRM_Core_PseudoConstant::stateProvinceAbbreviation(), true );
                                 }
@@ -129,7 +129,7 @@ class CRM_Core_BAO_CustomValueTable
                                 $countries['country'] = trim($countryVal);
                                 CRM_Utils_Array::lookupValue( $countries, 'country',
                                                               CRM_Core_PseudoConstant::country(), true );
-                                if ( ! $countries['country_id'] ) {
+                                if ( !CRM_Utils_Array::value( 'country_id' , $countries ) ) {
                                     CRM_Utils_Array::lookupValue( $countries, 'country',
                                                                   CRM_Core_PseudoConstant::countryIsoCode(), true );
                                 }
@@ -494,10 +494,30 @@ AND    cf.id IN ( $fieldIDList )
         $cvParams  = array( );
 
         while ( $dao->fetch( ) ) {
-            // ensure that value is of the right data type
             $dataType = $dao->data_type == 'Date' ? 'Timestamp' : $dao->data_type;
             foreach ( $fieldValues[$dao->cf_id] as $fieldValue ) {
-                if ( CRM_Utils_Type::escape( $fieldValue['value'],
+                // Format null values correctly
+                if ( $fieldValue['value'] === null || $fieldValue['value'] === '' ) {
+                  switch ( $dataType ) {
+                    case 'String':
+                    case 'Int':
+                    case 'Link':
+                    case 'Boolean':
+                      $fieldValue['value'] = '';
+                      break;
+                    case 'Timestamp':
+                      $fieldValue['value'] = null;
+                      break;
+                    case 'StateProvince':
+                    case 'Country':
+                    case 'Money':
+                    case 'Float':
+                      $fieldValue['value'] = (int) 0;
+                      break;
+                  }
+                }
+                // Ensure that value is of the right data type
+                elseif ( CRM_Utils_Type::escape( $fieldValue['value'],
                                              $dataType, false ) === null ) {
                     return CRM_Core_Error::createAPIError( ts( 'value: %1 is not of the right field data type: %2',
                                                                array( 1 => $fieldValue['value'],
@@ -579,25 +599,27 @@ AND    cf.id IN ( $fieldIDList )
                 $fieldIDs[] = (int ) $idx;
             }
         }
+
         $default = array('Contact', 'Individual', 'Household', 'Organization');
-        if (!($type = $params['entityType']) || in_array($params['entityType'], $default)) {
-          $type = NULL;
-        }
-        else {
-          require_once 'CRM/Core/SelectValues.php';
-          $entities = CRM_Core_SelectValues::customGroupExtends( );
-          if (!array_key_exists($type, $entities)) {
-            if (in_array($type, $entities)) {
-              $type = $entities[$type];
-              if (in_array($type, $default)) {
-                $type = NULL;
-              }
+        if  ( ! ( $type = CRM_Utils_Array::value( 'entityType', $params ) ) ||
+              in_array( $params['entityType'], $default ) ) {
+            $type = NULL;
+        } else {
+            require_once 'CRM/Core/SelectValues.php';
+            $entities = CRM_Core_SelectValues::customGroupExtends( );
+            if (!array_key_exists($type, $entities)) {
+                if (in_array($type, $entities)) {
+                    $type = $entities[$type];
+                    if (in_array($type, $default)) {
+                        $type = NULL;
+                    }
+                }
+                else {
+                    return CRM_Core_Error::createAPIError( ts( 'Invalid entity type' ) . ': "' . $type . '"' );
+                }
             }
-            else {
-              return CRM_Core_Error::createAPIError( ts( 'Invalid entity type' ) . ': "' . $type . '"' );
-            }
-          }
         }
+
         $values = self::getEntityValues( $params['entityID'],
                                          $type,
                                          $fieldIDs );

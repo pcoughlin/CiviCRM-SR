@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -81,13 +81,7 @@ class CRM_Upgrade_Page_Upgrade extends CRM_Core_Page {
         if ( $currentVer == '2.1.6' ) {
             $config = CRM_Core_Config::singleton( );
             // also cleanup the templates_c directory
-            $config->cleanup( 1 , false);
-            
-            if ( $config->userFramework !== 'Standalone' ) {
-                // clean the session
-                $session = CRM_Core_Session::singleton( );
-                $session->reset( 2 );
-            }
+            $config->cleanupCaches( );
         }
         // end of hack
         
@@ -112,13 +106,13 @@ class CRM_Upgrade_Page_Upgrade extends CRM_Core_Page {
                            array( 1 => $currentVer, 2 => $latestVer, 3 => $dbToolsLink ) );
             CRM_Core_Error::fatal( $error );
         } else if ( version_compare($currentVer, $latestVer) == 0 ) {
-            $message = ts( 'Your database has already been upgraded to CiviCRM %1',
-                           array( 1 => $latestVer ) );
+            $postUpgradeMessage = ts( 'Your database has already been upgraded to CiviCRM %1',
+                                      array( 1 => $latestVer ) );
             $template->assign( 'upgraded', true );
         } else {
-            $message   = ts('CiviCRM upgrade was successful.');
+            $postUpgradeMessage   = ts('CiviCRM upgrade was successful.');
             if ( $latestVer == '3.2.alpha1' ) {
-                $message .= '<br />' . ts("We have reset the COUNTED flag to false for the event participant status 'Pending from incomplete transaction'. This change ensures that people who have a problem during registration can try again.");
+                $postUpgradeMessage .= '<br />' . ts("We have reset the COUNTED flag to false for the event participant status 'Pending from incomplete transaction'. This change ensures that people who have a problem during registration can try again.");
             } else if ( $latestVer == '3.2.beta3' && ( version_compare($currentVer, '3.1.alpha1') >= 0 ) ) {
                 require_once 'CRM/Contact/BAO/ContactType.php';
                 $subTypes = CRM_Contact_BAO_ContactType::subTypes( );
@@ -147,7 +141,7 @@ class CRM_Upgrade_Page_Upgrade extends CRM_Core_Page {
                                         
                     if ( !empty( $subTypeTemplates ) ) {
                         $subTypeTemplates = implode( ',', $subTypeTemplates );
-                        $message .= '<br />' . ts('You are using custom template for contact subtypes: %1.', array(1 => $subTypeTemplates)) . '<br />' . ts('You need to move these subtype templates to the SubType directory in %1 and %2 respectively.', array(1 => 'CRM/Contact/Form/Edit', 2 => 'CRM/Contact/Page/View'));
+                        $postUpgradeMessage .= '<br />' . ts('You are using custom template for contact subtypes: %1.', array(1 => $subTypeTemplates)) . '<br />' . ts('You need to move these subtype templates to the SubType directory in %1 and %2 respectively.', array(1 => 'CRM/Contact/Form/Edit', 2 => 'CRM/Contact/Page/View'));
                     }
                 }
             } else if ( $latestVer == '3.2.beta4' ) {
@@ -158,7 +152,7 @@ SELECT  count( id ) as statusCount
  WHERE  name IN ( '" . implode( "' , '", $statuses )  .  "' ) ";
                 $count = CRM_Core_DAO::singleValueQuery( $sql );
                 if ( $count < count( $statuses ) ) {
-                    $message .= '<br />' . ts( "One or more Membership Status Rules was disabled during the upgrade because it did not match a recognized status name. if custom membership status rules were added to this site - review the disabled statuses and re-enable any that are still needed (Administer > CiviMember > Membership Status Rules)." );
+                    $postUpgradeMessage .= '<br />' . ts( "One or more Membership Status Rules was disabled during the upgrade because it did not match a recognized status name. if custom membership status rules were added to this site - review the disabled statuses and re-enable any that are still needed (Administer > CiviMember > Membership Status Rules)." );
                 }
             } else if ( $latestVer == '3.4.alpha1' ) {
                 $renamedBinScripts = array( 'ParticipantProcessor.php',
@@ -166,7 +160,7 @@ SELECT  count( id ) as statusCount
                                             'UpdateGreeting.php',
                                             'UpdateMembershipRecord.php',
                                             'UpdatePledgeRecord.php ' );
-                $message .= '<br />' . ts( 'The following files have been renamed to have a ".php" extension instead of a ".php.txt" extension' ) . ': ' . implode( ', ', $renamedBinScripts );
+                $postUpgradeMessage .= '<br />' . ts( 'The following files have been renamed to have a ".php" extension instead of a ".php.txt" extension' ) . ': ' . implode( ', ', $renamedBinScripts );
             }
 
             // set pre-upgrade warnings if any -
@@ -175,11 +169,38 @@ SELECT  count( id ) as statusCount
             //turning some tables to monolingual during 3.4.beta3, CRM-7869
             $upgradeTo   = str_replace( '4.0.', '3.4.', $latestVer  );
             $upgradeFrom = str_replace( '4.0.', '3.4.', $currentVer );
+            
+            // check for changed message templates
+            self::checkMessageTemplate( $template, $preUpgradeMessage, $upgradeTo, $upgradeFrom );
+
             if ( $upgrade->multilingual && 
                  version_compare( $upgradeFrom, '3.4.beta3'  ) == -1 &&
                  version_compare( $upgradeTo,   '3.4.beta3'  ) >=  0  ) {
                 $config = CRM_Core_Config::singleton( );
                 $preUpgradeMessage .= '<br />' . ts( "As per <a href='%1'>the related blog post</a>, we are making contact names, addresses and mailings monolingual; the values entered for the default locale (%2) will be preserved and values for other locales removed.", array( 1 => 'http://civicrm.org/blogs/shot/multilingual-civicrm-3440-making-some-fields-monolingual', 2 => $config->lcMessages ) );
+            }
+
+            if ( version_compare( $currentVer, '3.4.6' ) == -1 &&
+                 version_compare( $latestVer,  '3.4.6' ) >= 0 ) {
+                $googleProcessorExists = CRM_Core_DAO::singleValueQuery( "SELECT id FROM civicrm_payment_processor WHERE payment_processor_type = 'Google_Checkout' AND is_active = 1 LIMIT 1;" );
+
+                if ( $googleProcessorExists ) {
+                    $preUpgradeMessage .= '<br />' . ts( 'To continue using Google Checkout Payment Processor with latest version of CiviCRM, requires updating merchant account settings. Please refer "Set API callback URL and other settings" section of <a href="%1" target="_blank"><strong>Google Checkout Configuration</strong></a> doc.', array( 1 => 'http://wiki.civicrm.org/confluence/x/zAJTAg' ) );
+                }
+            }
+
+            // Scan through all php files and see if any file is interested in setting pre-upgrade-message
+            // based on $currentVer, $latestVer. 
+            // Please note, at this point upgrade hasn't started executing queries.
+            $revisions = $upgrade->getRevisionSequence();
+            foreach ( $revisions as $rev ) {
+                if ( version_compare($currentVer, $rev) < 0     && 
+                     version_compare( $rev , '3.2.alpha1' ) > 0 ) {
+                    $versionObject = $upgrade->incrementalPhpObject( $rev );
+                    if ( is_callable(array($versionObject, 'setPreUpgradeMessage')) ) {
+                        $versionObject->setPreUpgradeMessage( $preUpgradeMessage, $currentVer, $latestVer );
+                    }
+                }
             }
             
             $template->assign( 'currentVersion',  $currentVer);
@@ -218,7 +239,7 @@ SELECT  count( id ) as statusCount
                             // 3.2.alpha1 
                             $versionObject = $upgrade->incrementalPhpObject( $rev );
                             
-                            // predb check for major release.
+                            // pre-db check for major release.
                             if ( $upgrade->checkVersionRelease( $rev, 'alpha1' ) ) {
                                 if ( !(is_callable(array($versionObject, 'verifyPreDBstate'))) ) {
                                     CRM_Core_Error::fatal("verifyPreDBstate method was not found for $rev");
@@ -231,8 +252,15 @@ SELECT  count( id ) as statusCount
                                     }
                                     CRM_Core_Error::fatal( $error );
                                 }
+
+                                // set post-upgrade-message if any
+                                if ( is_callable(array($versionObject, 'setPostUpgradeMessage')) ) {
+                                    $versionObject->setPostUpgradeMessage( $postUpgradeMessage, $currentVer, $latestVer );
+                                }
                             }
-                            
+
+                            $upgrade->setSchemaStructureTables( $rev );
+
                             if ( is_callable(array($versionObject, $phpFunctionName)) ) {
                                 $versionObject->$phpFunctionName( $rev );
                             } else {
@@ -247,27 +275,15 @@ SELECT  count( id ) as statusCount
                 $upgrade->setVersion( $latestVer );
                 $template->assign( 'upgraded', true );
                 
-                // also cleanup the templates_c directory
+                // cleanup caches CRM-8739
                 $config = CRM_Core_Config::singleton( );
-                $config->cleanup( 1 , false );
-
-                // clear db caching
-                $config->clearDBCache( );
-
-                // clear temporary tables
-                $config->clearTempTables( );
-
-                // clean the session. Note: In case of standalone this makes the user logout. 
-                // So skip this step for standalone. 
-                if ( $config->userFramework !== 'Standalone' ) {
-                    $session = CRM_Core_Session::singleton( );
-                    $session->reset( 2 );
-                }
+                $config->cleanupCaches( 1 , false );
             }
         }
-        
+
         $template->assign( 'preUpgradeMessage', $preUpgradeMessage );
-        $template->assign( 'message', $message );
+        $template->assign( 'message', $postUpgradeMessage );
+
         $content = $template->fetch( 'CRM/common/success.tpl' );
         echo CRM_Utils_System::theme( 'page', $content, true, $this->_print, false, true );
     }
@@ -436,8 +452,8 @@ SELECT  count( id ) as statusCount
                     $defaults['enableComponents'][]   = 'CiviReport';
                     $defaults['enableComponentIDs'][] = $compId;
 
-                    require_once "CRM/Core/BAO/Setting.php";
-                    CRM_Core_BAO_Setting::add($defaults);            
+                    require_once "CRM/Core/BAO/ConfigSetting.php";
+                    CRM_Core_BAO_ConfigSetting::add($defaults);            
                 }
             }
         }
@@ -480,8 +496,8 @@ SELECT  count( id ) as statusCount
     {
         // upgrade all roles who have 'access CiviEvent' permission, to also have 
         // newly added permission 'edit_all_events', CRM-5472
-        $config =& CRM_Core_Config::singleton( );
-        if ( $config->userFramework == 'Drupal' ) {
+        $config = CRM_Core_Config::singleton( );
+        if ( $config->userSystem->is_drupal ) {
             $roles = user_roles(false, 'access CiviEvent');
             if ( !empty($roles) ) {
                 // CRM-7896
@@ -492,7 +508,7 @@ SELECT  count( id ) as statusCount
         }
 
         //make sure 'Deceased' membership status present in db,CRM-5636
-        $template =& CRM_Core_Smarty::singleton( );
+        $template = CRM_Core_Smarty::singleton( );
         
         $addDeceasedStatus = false;
         $sql = "SELECT max(id) FROM civicrm_membership_status where name = 'Deceased'"; 
@@ -541,4 +557,68 @@ SELECT  id
             }
         }
     }
+    function checkMessageTemplate( &$template, &$message, $latestVer, $currentVer ) 
+    {
+        if ( version_compare($currentVer, '3.1.alpha1') < 0 ) {
+            return;
+        }
+        
+        $sql =
+            "SELECT orig.workflow_id as workflow_id,
+             orig.msg_title as title
+            FROM civicrm_msg_template diverted JOIN civicrm_msg_template orig ON (
+                diverted.workflow_id = orig.workflow_id AND
+                orig.is_reserved = 1                    AND (
+                    diverted.msg_subject != orig.msg_subject OR
+                    diverted.msg_text    != orig.msg_text    OR
+                    diverted.msg_html    != orig.msg_html
+                )
+            )";
+        
+        $dao =& CRM_Core_DAO::executeQuery($sql);
+        while ($dao->fetch()) {
+            $workflows[$dao->workflow_id] = $dao->title;
+        }
+
+        if( empty( $workflows ) ) {
+            return;
+        }
+
+        $html = null;
+        $pathName = dirname( dirname( __FILE__ ) );
+        $flag = false;
+        foreach( $workflows as $workflow => $title) {
+            $name = CRM_Core_DAO::getFieldValue( 'CRM_Core_DAO_OptionValue',
+                                                 $workflow,
+                                                 'name',
+                                                 'id' ) ;  
+            
+            // check if file exists locally
+            $textFileName = implode( DIRECTORY_SEPARATOR,
+                                 array($pathName,
+                                       "{$latestVer}.msg_template",
+                                       'message_templates',
+                                       "{$name}_text.tpl" ) );
+
+            $htmlFileName = implode( DIRECTORY_SEPARATOR,
+                                     array($pathName,
+                                           "{$latestVer}.msg_template",
+                                           'message_templates',
+                                           "{$name}_html.tpl" ) );
+            
+            if ( file_exists( $textFileName ) || 
+                 file_exists( $htmlFileName ) ) {
+                $flag = true;
+                $html .= "<li>{$title}</li>";
+            }
+        }
+
+        if ( $flag == true ) {
+            $html = "<ul>". $html."<ul>";
+           
+            $message .= '<br />' . ts("The default copies of the message templates listed below will be updated to handle new features. Your installation has customized versions of these message templates, and you will need to apply the updates manually after running this upgrade. <a href='%1' style='color:white; text-decoration:underline; font-weight:bold;' target='_blank'>Click here</a> for detailed instructions. %2", array( 1 => 'http://wiki.civicrm.org/confluence/display/CRMDOC40/Message+Templates#MessageTemplates-UpgradesandCustomizedSystemWorkflowTemplates', 2 => $html));
+           
+        }
+    }
+
 }

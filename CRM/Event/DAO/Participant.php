@@ -1,7 +1,7 @@
 <?php
 /*
 +--------------------------------------------------------------------+
-| CiviCRM version 4.0                                                |
+| CiviCRM version 4.1                                                |
 +--------------------------------------------------------------------+
 | Copyright CiviCRM LLC (c) 2004-2011                                |
 +--------------------------------------------------------------------+
@@ -169,6 +169,24 @@ class CRM_Event_DAO_Participant extends CRM_Core_DAO
      */
     public $campaign_id;
     /**
+     * Discount Amount
+     *
+     * @var int unsigned
+     */
+    public $discount_amount;
+    /**
+     * FK to civicrm_event_carts
+     *
+     * @var int unsigned
+     */
+    public $cart_id;
+    /**
+     * On Waiting List
+     *
+     * @var int
+     */
+    public $must_wait;
+    /**
      * class constructor
      *
      * @access public
@@ -194,6 +212,7 @@ class CRM_Event_DAO_Participant extends CRM_Core_DAO
                 'registered_by_id' => 'civicrm_participant:id',
                 'discount_id' => 'civicrm_discount:id',
                 'campaign_id' => 'civicrm_campaign:id',
+                'cart_id' => 'civicrm_event_carts:id',
             );
         }
         return self::$_links;
@@ -372,6 +391,21 @@ class CRM_Event_DAO_Participant extends CRM_Core_DAO
                     'export' => true,
                     'FKClassName' => 'CRM_Campaign_DAO_Campaign',
                 ) ,
+                'discount_amount' => array(
+                    'name' => 'discount_amount',
+                    'type' => CRM_Utils_Type::T_INT,
+                    'title' => ts('Discount Amount') ,
+                ) ,
+                'cart_id' => array(
+                    'name' => 'cart_id',
+                    'type' => CRM_Utils_Type::T_INT,
+                    'FKClassName' => 'CRM_Event_Cart_DAO_Cart',
+                ) ,
+                'must_wait' => array(
+                    'name' => 'must_wait',
+                    'type' => CRM_Utils_Type::T_INT,
+                    'title' => ts('Must Wait') ,
+                ) ,
             );
         }
         return self::$_fields;
@@ -406,7 +440,7 @@ class CRM_Event_DAO_Participant extends CRM_Core_DAO
     {
         if (!(self::$_import)) {
             self::$_import = array();
-            $fields = & self::fields();
+            $fields = self::fields();
             foreach($fields as $name => $field) {
                 if (CRM_Utils_Array::value('import', $field)) {
                     if ($prefix) {
@@ -429,7 +463,7 @@ class CRM_Event_DAO_Participant extends CRM_Core_DAO
     {
         if (!(self::$_export)) {
             self::$_export = array();
-            $fields = & self::fields();
+            $fields = self::fields();
             foreach($fields as $name => $field) {
                 if (CRM_Utils_Array::value('export', $field)) {
                     if ($prefix) {

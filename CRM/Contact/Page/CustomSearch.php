@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -82,7 +82,7 @@ ORDER By  v.weight
      */
     function browse()
     {
-        $rows =& self::info( );
+        $rows = self::info( );
         $this->assign('rows', $rows);
         return parent::run();
     }

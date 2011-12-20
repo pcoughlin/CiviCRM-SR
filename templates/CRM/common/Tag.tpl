@@ -1,10 +1,8 @@
 {if !$tagsetType or $tagsetType eq 'contact'}
 {foreach from=$tagsetInfo_contact item=tagset}
 <div class="crm-section tag-section contact-tagset-{$tagset.parentID}-section">
-<div class="label">
 <label>{$tagset.parentName}</label>
-</div>
-<div class="content">
+<div{if $context EQ "contactTab"} style="margin-top:-15px;"{/if}>
 {assign var=elemName  value = $tagset.tagsetElementName}
 {assign var=parID     value = $tagset.parentID}
 {assign var=editTagSet value=false}
@@ -34,9 +32,23 @@
             hintText: hintText, 
             onAdd: function ( item ) { 
                 processContactTags_{/literal}{$tagset.parentID}{literal}( 'select', item.id );
+                
+                //update count of tags in summary tab
+                if ( cj( '.ui-tabs-nav #tab_tag a' ).length ) {
+                    var existingTagsInTagset = cj('.token-input-delete-token-facebook').length;
+                    var tagCount = cj("#tagtree input:checkbox:checked").length + existingTagsInTagset;  
+                    cj( '.ui-tabs-nav #tab_tag a' ).html( 'Tags <em>' + tagCount + '</em>');
+                }
             },
             onDelete: function ( item ) { 
                 processContactTags_{/literal}{$tagset.parentID}{literal}( 'delete', item.id );
+
+                //update count of tags in summary tab
+                if ( cj( '.ui-tabs-nav #tab_tag a' ).length ) {
+                    var existingTagsInTagset = cj('.token-input-delete-token-facebook').length;
+                    var tagCount = cj("#tagtree input:checkbox:checked").length + existingTagsInTagset;  
+                    cj( '.ui-tabs-nav #tab_tag a' ).html( 'Tags <em>' + tagCount + '</em>');
+                }
             } 
          });
     cj( ".contact-tagset-{/literal}{$tagset.parentID}{literal}-section:not(.crm-processed-input)").addClass("crm-processed-input");    

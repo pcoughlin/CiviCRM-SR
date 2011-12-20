@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -412,8 +412,9 @@ SELECT  survey.id    as id,
         }
         
         if ( empty( $returnProperties ) ) {
-            require_once 'CRM/Core/BAO/Preferences.php';
-            $autocompleteContactSearch = CRM_Core_BAO_Preferences::valueOptions( 'contact_autocomplete_options' );
+            require_once 'CRM/Core/BAO/Setting.php';
+            $autocompleteContactSearch = CRM_Core_BAO_Setting::valueOptions( CRM_Core_BAO_Setting::SYSTEM_PREFERENCES_NAME,
+                                                                             'contact_autocomplete_options' );
             $returnProperties = array_fill_keys( array_merge( array( 'contact_type',
                                                                      'contact_sub_type',
                                                                      'sort_name'), 
@@ -662,10 +663,10 @@ INNER JOIN  civicrm_activity_assignment activityAssignment ON ( activityAssignme
      */
     static function getResultSets(  ) {
         $resultSets = array( );
-        $query = "SELECT id, label FROM civicrm_option_group WHERE name LIKE 'civicrm_survey_%' AND is_active=1";
+        $query = "SELECT id, title FROM civicrm_option_group WHERE name LIKE 'civicrm_survey_%' AND is_active=1";
         $dao   = CRM_Core_DAO::executeQuery( $query );
         while ( $dao->fetch( ) ) {
-            $resultSets[$dao->id] = $dao->label;
+            $resultSets[$dao->id] = $dao->title;
         }
         
         return $resultSets;
@@ -952,6 +953,61 @@ INNER JOIN  civicrm_survey survey ON ( activity.source_record_id = survey.id )
         }
         
         return $interviewers;
+    }
+
+    /** 
+     * Check and update the survey respondents.
+     *
+     * @return void
+     */
+    public function releaseRespondent( $params )
+    {
+        require_once 'CRM/Core/PseudoConstant.php';
+        require_once 'CRM/Campaign/BAO/Survey.php';
+        $activityStatus  = CRM_Core_PseudoConstant::activityStatus( 'name' );
+        $reserveStatusId = array_search( 'Scheduled', $activityStatus ); 
+        $surveyActivityTypes = CRM_Campaign_BAO_Survey::getSurveyActivityType( );
+        $surveyActivityTypesIds = array_keys( $surveyActivityTypes );
+        
+        //retrieve all survey activities related to reserve action.
+        $releasedCount = 0;
+        if ( $reserveStatusId && !empty( $surveyActivityTypesIds ) ) {
+            $query = '
+    SELECT  activity.id as id, 
+            activity.activity_date_time as activity_date_time,
+            survey.id as surveyId,
+            survey.release_frequency as release_frequency
+      FROM  civicrm_activity activity
+INNER JOIN  civicrm_survey survey ON ( survey.id = activity.source_record_id ) 
+     WHERE  activity.is_deleted = 0 
+       AND  activity.status_id = %1 
+       AND  activity.activity_type_id IN ( ' . implode( ', ', $surveyActivityTypesIds ) . ' )';
+            $activity = CRM_Core_DAO::executeQuery( $query, array( 1 => array( $reserveStatusId, 'Positive' ) ) );
+            $releasedIds = array( );
+            while ( $activity->fetch( ) ) {
+                if ( !$activity->release_frequency ) continue;
+                $reservedSeconds = CRM_Utils_Date::unixTime( $activity->activity_date_time );
+                $releasedSeconds = $activity->release_frequency * 24 * 3600;
+                $totalReservedSeconds = $reservedSeconds + $releasedSeconds;
+                if ( $totalReservedSeconds < time( ) ) $releasedIds[$activity->id] = $activity->id; 
+            }
+            
+            //released respondent.
+            if ( !empty( $releasedIds ) ) {
+                $query = '
+UPDATE  civicrm_activity
+   SET  is_deleted = 1
+ WHERE  id IN ( ' . implode( ', ', $releasedIds ) .' )';
+                CRM_Core_DAO::executeQuery( $query );
+                $releasedCount = count( $releasedIds );
+            }
+        }
+        
+        $rtnMsg = array( 'is_error' => 0,
+                         'messages' => "Number of respondents released = {$releasedCount}" );
+        
+        return $rtnMsg;
+        
     }
     
 }

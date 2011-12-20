@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -202,6 +202,12 @@ class CRM_Core_BAO_CustomValue extends CRM_Core_DAO
          // delete custom value from corresponding custom value table
          $sql = "DELETE FROM {$tableName} WHERE id = {$customValueID}";
          CRM_Core_DAO::executeQuery( $sql );
+
+         require_once 'CRM/Utils/Hook.php';
+         CRM_Utils_Hook::custom( 'delete',
+                                 $customGroupID,
+                                 null,
+                                 $customValueID );
      }
 }
 

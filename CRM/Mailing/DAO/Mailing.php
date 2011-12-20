@@ -1,7 +1,7 @@
 <?php
 /*
 +--------------------------------------------------------------------+
-| CiviCRM version 4.0                                                |
+| CiviCRM version 4.1                                                |
 +--------------------------------------------------------------------+
 | Copyright CiviCRM LLC (c) 2004-2011                                |
 +--------------------------------------------------------------------+
@@ -277,6 +277,12 @@ class CRM_Mailing_DAO_Mailing extends CRM_Core_DAO
      */
     public $campaign_id;
     /**
+     * Remove duplicate emails?
+     *
+     * @var boolean
+     */
+    public $dedupe_email;
+    /**
      * class constructor
      *
      * @access public
@@ -495,6 +501,11 @@ class CRM_Mailing_DAO_Mailing extends CRM_Core_DAO
                     'type' => CRM_Utils_Type::T_INT,
                     'FKClassName' => 'CRM_Campaign_DAO_Campaign',
                 ) ,
+                'dedupe_email' => array(
+                    'name' => 'dedupe_email',
+                    'type' => CRM_Utils_Type::T_BOOLEAN,
+                    'title' => ts('Dedupe Email') ,
+                ) ,
             );
         }
         return self::$_fields;
@@ -529,7 +540,7 @@ class CRM_Mailing_DAO_Mailing extends CRM_Core_DAO
     {
         if (!(self::$_import)) {
             self::$_import = array();
-            $fields = & self::fields();
+            $fields = self::fields();
             foreach($fields as $name => $field) {
                 if (CRM_Utils_Array::value('import', $field)) {
                     if ($prefix) {
@@ -552,7 +563,7 @@ class CRM_Mailing_DAO_Mailing extends CRM_Core_DAO
     {
         if (!(self::$_export)) {
             self::$_export = array();
-            $fields = & self::fields();
+            $fields = self::fields();
             foreach($fields as $name => $field) {
                 if (CRM_Utils_Array::value('export', $field)) {
                     if ($prefix) {

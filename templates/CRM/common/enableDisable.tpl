@@ -1,6 +1,6 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -28,6 +28,7 @@
 {literal}
 <script type="text/javascript">
 function modifyLinkAttributes( recordID, op, recordBAO, reloadPage, rowId ) {
+
     //we changed record from enable to disable
     if ( op == 'enable-disable' ) {
         var fieldID     = '#' + rowId + '_' + recordID + " a." + "disable-action";
@@ -66,6 +67,17 @@ function modifyLinkAttributes( recordID, op, recordBAO, reloadPage, rowId ) {
 
     //finally change class to enable-action.
     cj( fieldID ).attr( 'class', newClass );
+}
+
+function removeLinkAttributes( recordID, op, rowId ) {
+    if ( op == 'enable-disable' ) {
+        var fieldID     = '#' + rowId + '_' + recordID + " a." + "disable-action";
+    } else if ( op == 'disable-enable' ) {
+        var fieldID     = '#' + rowId + '_' + recordID + " a." + "enable-action";
+    }
+
+    cj( fieldID ).html( '' );
+    
 }
 
 function modifySelectorRow( recordID, op, rowId ) {
@@ -167,8 +179,12 @@ function saveEnableDisable( recordID, recordBAO, op, reloadPage, rowId ) {
             //change row class and show/hide action links.
             modifySelectorRow( recordID, op, rowId );
 
-            //modify action link html        
-            modifyLinkAttributes( recordID, op, recordBAO, reloadPage, rowId ); 
+            //modify action link html
+            if ( recordBAO == 'CRM_Contribute_BAO_ContributionRecur' ) {
+                removeLinkAttributes( recordID, op, rowId );
+            } else {
+                modifyLinkAttributes( recordID, op, recordBAO, reloadPage, rowId ); 
+            }
         } 
 
             //cj( '#enableDisableStatusMsg' ).show( ).html( successMsg );

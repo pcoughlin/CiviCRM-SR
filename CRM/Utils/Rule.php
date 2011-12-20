@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -154,10 +154,10 @@ class CRM_Utils_Rule
     {
         $result = $default;
         if ( is_string( $value ) &&
-             preg_match( '/^\d\d\d\d-?\d\d-?\d\d(\s\d\d:\d\d:\d\d|\d\d\d\d\d\d)?$/', $value ) ) {
+             preg_match( '/^\d\d\d\d-?\d\d-?\d\d(\s\d\d:\d\d(:\d\d)?|\d\d\d\d(\d\d)?)?$/', $value ) ) {
             $result = $value;
         }
-        
+
         return $result;
     }
     
@@ -185,6 +185,11 @@ class CRM_Utils_Rule
         if ( ! $d && ! $m && ! $y ) {
             return true; 
         } 
+
+        // CRM-9017 CiviContribute/CiviMember form with expiration date format 'm Y'
+        if (! $m && CRM_Utils_Array::value( 'm', $date )) {
+            $m = CRM_Utils_Array::value( 'm', $date );
+        }
 
         $day = $mon = 1; 
         $year = 0; 
@@ -312,7 +317,7 @@ class CRM_Utils_Rule
         // first remove all white space
         $value = str_replace( array( ' ', "\t", "\n" ), '', $value );
 
-        $config =& CRM_Core_Config::singleton( );
+        $config = CRM_Core_Config::singleton( );
 
         if ( $config->monetaryThousandSeparator ) {
             $mon_thousands_sep = $config->monetaryThousandSeparator;
@@ -345,6 +350,8 @@ class CRM_Utils_Rule
         //field and not defined in the decimal Point in config settings
         if ($config->monetaryDecimalPoint && 
             $config->monetaryDecimalPoint != '.' &&
+            /* CRM-7122 also check for Thousands Separator in config settings */
+            $config->monetaryThousandSeparator != '.' &&
             substr_count( $value, '.' ) ) {
             return false;
         }
@@ -507,7 +514,7 @@ class CRM_Utils_Rule
     {
         static $currencyCodes = null;
         if (!$currencyCodes) {
-            $currencyCodes =& CRM_Core_PseudoConstant::currencyCode();
+            $currencyCodes = CRM_Core_PseudoConstant::currencyCode();
         }
         if (in_array($value, $currencyCodes)) {
             return true;
@@ -533,7 +540,7 @@ class CRM_Utils_Rule
     {
         if ( $value ) {            
             require_once 'CRM/Core/BAO/CustomOption.php';
-            $selectOption =& CRM_Core_BAO_CustomOption::valuesByID( $options['fieldID'], $options['optionGroupID'] );
+            $selectOption = CRM_Core_BAO_CustomOption::valuesByID( $options['fieldID'], $options['optionGroupID'] );
             
             if ( !in_array( $value, $selectOption ) ) {
                 return false;

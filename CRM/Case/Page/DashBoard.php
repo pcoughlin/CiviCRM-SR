@@ -1,7 +1,7 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -65,7 +65,7 @@ class CRM_Case_Page_DashBoard extends CRM_Core_Page
             return;
         }
         
-        $session = & CRM_Core_Session::singleton();
+        $session = CRM_Core_Session::singleton();
         $allCases = CRM_Utils_Request::retrieve( 'all', 'Positive', $session );
         
         CRM_Utils_System::setTitle( ts('CiviCase Dashboard') );

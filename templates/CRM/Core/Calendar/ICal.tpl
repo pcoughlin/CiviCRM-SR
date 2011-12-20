@@ -1,6 +1,6 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -26,6 +26,7 @@
 BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//CiviCRM//NONSGML CiviEvent iCal//EN
+X-WR-TIMEZONE:{$timezone}
 METHOD:PUBLISH
 {foreach from=$events key=uid item=event}
 BEGIN:VEVENT

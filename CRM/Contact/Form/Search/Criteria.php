@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -89,13 +89,16 @@ class CRM_Contact_Form_Search_Criteria {
         $attributes['job_title']['size'] = 30;
         $form->addElement('text', 'job_title', ts('Job Title'), $attributes['job_title'], 'size="30"' );
 
-        $config =& CRM_Core_Config::singleton();
+        $config = CRM_Core_Config::singleton();
         if (CRM_Core_Permission::check('access deleted contacts') and $config->contactUndelete) {
-            $form->add('checkbox', 'deleted_contacts', ts('Search in Trash (deleted contacts)'));
+            $form->add( 'checkbox', 'deleted_contacts', ts('Search in Trash') . '<br />' . ts('(deleted contacts)') );
         }
 
         // add checkbox for cms users only
         $form->addYesNo( 'uf_user', ts( 'CMS User?' ) );
+
+        // tag all search  
+        $form->add('text', 'tag_search', ts('All Tags') ); 
  
         // add search profiles
         require_once 'CRM/Core/BAO/UFGroup.php';
@@ -108,7 +111,7 @@ class CRM_Contact_Form_Search_Criteria {
         $componentProfiles = array( );
         $componentProfiles = CRM_Core_BAO_UFGroup::getProfiles($types);
 
-        $ufGroups           =& CRM_Core_BAO_UFGroup::getModuleUFGroup('Search Profile', 1);
+        $ufGroups           = CRM_Core_BAO_UFGroup::getModuleUFGroup('Search Profile', 1);
         $accessibleUfGroups = CRM_Core_Permission::ufGroup( CRM_Core_Permission::VIEW );
 
         $searchProfiles = array ( );
@@ -124,7 +127,7 @@ class CRM_Contact_Form_Search_Criteria {
                           array('0' => ts('- default view -')) + $searchProfiles );
 
         require_once 'CRM/Contact/Form/Search.php';
-        $componentModes =& CRM_Contact_Form_Search::getModeSelect( );
+        $componentModes = CRM_Contact_Form_Search::getModeSelect( );
 
         // unset contributions or participants if user does not have
         // permission on them
@@ -134,6 +137,10 @@ class CRM_Contact_Form_Search_Criteria {
 
         if ( ! CRM_Core_Permission::access( 'CiviEvent' ) ) {
             unset ( $componentModes['3'] );
+        }
+        
+        if ( ! CRM_Core_Permission::access( 'CiviMember' ) ) {
+            unset ( $componentModes['5'] );
         }
 
         if ( ! CRM_Core_Permission::check( 'view all activities' ) ) {
@@ -174,15 +181,25 @@ class CRM_Contact_Form_Search_Criteria {
         // checkboxes for DO NOT phone, email, mail
         // we take labels from SelectValues
         $t = CRM_Core_SelectValues::privacy();
-        $t['do_not_toggle'] = ts( 'Include contacts who have these privacy option(s).' );
-        $privacy[] = HTML_QuickForm::createElement('advcheckbox', 'do_not_phone', null, $t['do_not_phone']);
-        $privacy[] = HTML_QuickForm::createElement('advcheckbox', 'do_not_email', null, $t['do_not_email']);
-        $privacy[] = HTML_QuickForm::createElement('advcheckbox', 'do_not_mail' , null, $t['do_not_mail']);
-        $privacy[] = HTML_QuickForm::createElement('advcheckbox', 'do_not_sms' ,  null, $t['do_not_sms']);
-        $privacy[] = HTML_QuickForm::createElement('advcheckbox', 'do_not_trade', null, $t['do_not_trade']);
-        $privacy[] = HTML_QuickForm::createElement('advcheckbox', 'do_not_toggle', null, $t['do_not_toggle']);
-        
-        $form->addGroup($privacy, 'privacy', ts('Privacy'), array( '&nbsp;', '&nbsp;', '&nbsp;', '<br/>' ) );
+        $form->add( 'select',
+                    'privacy_options',
+                    ts('Privacy'),
+                    $t,
+                    false,
+                    array( 'id' => 'privacy_options',
+                           'multiple'=> 'multiple',
+                           'title' => ts('- select -') ) );
+
+        $form->addElement( 'select', 
+                           'privacy_operator', 
+                           ts('Operator'), 
+                           array( 'OR'  => ts( 'OR'  ),
+                                  'AND' => ts( 'AND' ) ) );
+
+        $toggleChoice = array( );
+        $toggleChoice[] = $form->createElement('radio', null, '', ' ' . ts('Exclude'), '1' );
+        $toggleChoice[] = $form->createElement('radio', null, '', ' ' . ts('Include by Privacy Option(s)'), '2' );
+        $form->addGroup( $toggleChoice, 'privacy_toggle', 'Privacy Options' );
 
         // preferred communication method 
         require_once 'CRM/Core/PseudoConstant.php';
@@ -207,8 +224,9 @@ class CRM_Contact_Form_Search_Criteria {
     static function location( &$form ) {
         $form->addElement( 'hidden', 'hidden_location', 1 );
         
-        require_once 'CRM/Core/BAO/Preferences.php';
-        $addressOptions = CRM_Core_BAO_Preferences::valueOptions( 'address_options', true, null, true );
+        require_once 'CRM/Core/BAO/Setting.php';
+        $addressOptions = CRM_Core_BAO_Setting::valueOptions( CRM_Core_BAO_Setting::SYSTEM_PREFERENCES_NAME,
+                                                              'address_options', true, null, true );
         
         $attributes = CRM_Core_DAO::getAttribute('CRM_Core_DAO_Address');
         
@@ -220,11 +238,22 @@ class CRM_Contact_Form_Search_Criteria {
                           'state_province'         => array( ts('State / Province')  ,  $attributes['state_province_id'], 'stateProvince', true ),
                           'country'                => array( ts('Country')           ,  $attributes['country_id'], 'country', false ), 
                           'address_name'           => array( ts('Address Name')      ,  $attributes['address_name'], null, null ), 
+                          'street_number'          => array( ts('Street Number')       , $attributes['street_number'], null, null ),
+                          'street_name'            => array( ts('Street Name')         , $attributes['street_name'], null, null ),
+                          'street_unit'            => array( ts('Apt/Unit/Suite')         , $attributes['street_unit'], null, null ),
                            );
+
+        $parseStreetAddress = CRM_Utils_Array::value( 'street_address_parsing', $addressOptions, 0 );
+        $form->assign( 'parseStreetAddress', $parseStreetAddress );
         foreach ( $elements as $name => $v ) {
             list( $title, $attributes, $select, $multiSelect ) = $v;
-            
-            if ( ! $addressOptions[$name] ) {
+
+            if ( in_array( $name,
+                           array('street_number', 'street_name', 'street_unit' ) ) ) {
+                if ( ! $parseStreetAddress ) {
+                    continue;
+                }
+            } else if ( ! $addressOptions[$name] ) {
                 continue;
             }
  
@@ -377,6 +406,12 @@ class CRM_Contact_Form_Search_Criteria {
         $relStatusOption  = array( ts('Active '), ts('Inactive '), ts('All') );
         $form->addRadio( 'relation_status', ts( 'Relationship Status' ), $relStatusOption);
         $form->setDefaults(array('relation_status' => 0));
+
+        //add the target group
+        if ( $form->_group ) {
+            $form->add( 'select', 'relation_target_group',  ts( 'Target Contact(s) in Group' ), $form->_group, false, 
+                array( 'id' => 'relation_target_group',  'multiple'=> 'multiple', 'title' => ts('- select -') ) );
+        }
         
         // add all the custom  searchable fields
         require_once 'CRM/Core/BAO/CustomGroup.php';
@@ -404,7 +439,9 @@ class CRM_Contact_Form_Search_Criteria {
         $genderOptions = array( );
         $gender =CRM_Core_PseudoConstant::gender();
         foreach ($gender as $key => $var) {
-            $genderOptions[$key] = HTML_QuickForm::createElement('radio', null, ts('Gender'), $var, $key);
+            $genderOptions[$key] = HTML_QuickForm::createElement('radio', null,
+                                                                 ts('Gender'), $var, $key,
+                                                                 array( 'id' => "civicrm_gender_{$var}_{$key}" ) );
         }
         $form->addGroup($genderOptions, 'gender', ts('Gender'));
          

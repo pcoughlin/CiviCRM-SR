@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -50,7 +50,9 @@ class CRM_Event_Page_Tab extends CRM_Core_Page
      */
     function browse( ) 
     {
-        $controller = new CRM_Core_Controller_Simple( 'CRM_Event_Form_Search', ts('Events'), $this->_action );
+        $controller = new CRM_Core_Controller_Simple( 'CRM_Event_Form_Search', 
+                                                      ts('Events'), 
+                                                      $this->_action );
         $controller->setEmbedded( true );
         $controller->reset( );
         $controller->set( 'cid'  , $this->_contactId );
@@ -173,7 +175,9 @@ class CRM_Event_Page_Tab extends CRM_Core_Page
 
         if ( $this->_action & CRM_Core_Action::VIEW ) { 
             $this->view( ); 
-        } else if ( $this->_action & ( CRM_Core_Action::UPDATE | CRM_Core_Action::ADD | CRM_Core_Action::DELETE ) ) {
+        } else if ( $this->_action & ( CRM_Core_Action::UPDATE | 
+                                       CRM_Core_Action::ADD | 
+                                       CRM_Core_Action::DELETE ) ) {
             $this->edit( ); 
         } else {
             $this->browse( ); 

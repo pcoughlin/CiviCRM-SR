@@ -1,6 +1,6 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -64,16 +64,18 @@ function clearAmountOther() {
     <div id="intro_text" class="crm-section intro_text-section">
         {$intro_text}
     </div>
-
-{if $priceSet}
-    <div id="priceset">
+{if $islifetime or $ispricelifetime }
+<div id="help">You have a current Lifetime Membership which does not need top be renewed.</div> 
+{/if}
+{if $priceSet && empty($useForMember)}
+    <div id="priceset"> 
         <fieldset>
             <legend>{ts}Contribution{/ts}</legend>
-            {include file="CRM/Price/Form/PriceSet.tpl"}
+            {include file="CRM/Price/Form/PriceSet.tpl" extends="Contribution"}
         </fieldset>
     </div>
-{else}
-    {include file="CRM/Contribute/Form/Contribution/MembershipBlock.tpl" context="makeContribution"}
+{else}  
+        {include file="CRM/Contribute/Form/Contribution/MembershipBlock.tpl" context="makeContribution"}
 
 	{if $form.amount}
 	    <div class="crm-section {$form.amount.name}-section">
@@ -295,6 +297,11 @@ function clearAmountOther() {
 			<p>{$footer_text}</p>
     	</div>
     {/if}
+    <br>
+    {if $isShare}
+        {capture assign=eventUrl}{crmURL p='civicrm/contribute/transact' q="reset=1&amp;id=`$contributionPageID`" a=true fe=1 h=1}{/capture}
+        {include file="CRM/common/SocialNetwork.tpl" url=$eventUrl title=$title pageURL=$eventUrl}
+    {/if}
 </div>
 
 {* Hide Credit Card Block and Billing information if contribution is pay later. *}
@@ -358,7 +365,7 @@ function enablePeriod ( ) {
     }
 }
 
-{/literal}{if $relatedOrganizationFound}{literal}
+{/literal}{if $relatedOrganizationFound and $reset}{literal}
    cj( "#is_for_organization" ).attr( 'checked', true );
    showOnBehalf( false );
 {/literal}{elseif $onBehalfRequired}{literal}

@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -63,7 +63,7 @@ class CRM_Contribute_BAO_ContributionRecur extends CRM_Contribute_DAO_Contributi
         
         $duplicates = array( );
         if ( self::checkDuplicate( $params, $duplicates ) ) {
-            $error =& CRM_Core_Error::singleton( ); 
+            $error = CRM_Core_Error::singleton( ); 
             $d = implode( ', ', $duplicates );
             $error->push( CRM_Core_Error::DUPLICATE_CONTRIBUTION,
                           'Fatal',
@@ -78,7 +78,7 @@ class CRM_Contribute_BAO_ContributionRecur extends CRM_Contribute_DAO_Contributi
 
 	// set currency for CRM-1496
 	if ( ! isset( $recurring->currency ) ) {
-	  $config =& CRM_Core_Config::singleton( );
+	  $config = CRM_Core_Config::singleton( );
 	  $recurring->currency = $config->defaultCurrency;
 	}
 	      $result = $recurring->save( );
@@ -131,7 +131,7 @@ class CRM_Contribute_BAO_ContributionRecur extends CRM_Contribute_DAO_Contributi
         }
 
         $query = "SELECT id FROM civicrm_contribution_recur WHERE $clause";
-        $dao =& CRM_Core_DAO::executeQuery( $query, $params );
+        $dao = CRM_Core_DAO::executeQuery( $query, $params );
         $result = false;
         while ( $dao->fetch( ) ) {
             $duplicates[] = $dao->id;
@@ -229,6 +229,7 @@ SELECT p.payment_processor_id
         $recur     = new CRM_Contribute_DAO_ContributionRecur( );
         $recur->id = $recurId;
         $recur->whereAdd ("contribution_status_id != $canceledId");
+
         if ( $recur->find(true) ) {
             require_once 'CRM/Core/Transaction.php';
             $transaction = new CRM_Core_Transaction( );
@@ -239,13 +240,76 @@ SELECT p.payment_processor_id
             $recur->cancel_date            = date( 'YmdHis' );
             $recur->save( );
 
-            require_once 'CRM/Core/Payment/BaseIPN.php';
-            $baseIPN = new CRM_Core_Payment_BaseIPN( );
-            return $baseIPN->cancelled( $objects, $transaction );
+            if ( $objects == CRM_Core_DAO::$_nullObject ) {
+                $transaction->commit( );
+                return true;           
+            } else {
+                require_once 'CRM/Core/Payment/BaseIPN.php';
+                $baseIPN = new CRM_Core_Payment_BaseIPN( );
+                return $baseIPN->cancelled( $objects, $transaction );
+            }
+    
         }
 
         return false;
     }
+
+
+    /**
+     * Function to get list of recurring contribution of contact Ids
+     *
+     * @param int $contactId Contact ID
+     *
+     * @return return the list of recurring contribution fields
+     * 
+     * @access public
+     * @static
+     */
+    static function getRecurContributions( $contactId )
+    {
+        $params=array( );
+        require_once 'CRM/Contribute/DAO/ContributionRecur.php';
+        $recurDAO = new CRM_Contribute_DAO_ContributionRecur();
+        $recurDAO->contact_id =  $contactId;
+        $recurDAO->find( );
+        require_once 'CRM/Contribute/PseudoConstant.php';
+        $contributionStatus = CRM_Contribute_PseudoConstant::contributionStatus( );
+
+        while( $recurDAO->fetch( ) ) {
+            $params[$recurDAO->id]['id']                        = $recurDAO->id;
+            $params[$recurDAO->id]['contactId']                 = $recurDAO->contact_id;
+            $params[$recurDAO->id]['start_date']                = $recurDAO->start_date;
+            $params[$recurDAO->id]['end_date']                  = $recurDAO->end_date;
+            $params[$recurDAO->id]['next_sched_contribution']   = $recurDAO->next_sched_contribution;
+            $params[$recurDAO->id]['amount']                    = $recurDAO->amount;
+            $params[$recurDAO->id]['frequency_unit']            = $recurDAO->frequency_unit;
+            $params[$recurDAO->id]['frequency_interval']        = $recurDAO->frequency_interval;
+            $params[$recurDAO->id]['installments']              = $recurDAO->installments;
+            $params[$recurDAO->id]['contribution_status_id']    = $recurDAO->contribution_status_id;
+            $params[$recurDAO->id]['contribution_status']       = CRM_Utils_Array::value($recurDAO->contribution_status_id, $contributionStatus );
+            $params[$recurDAO->id]['is_test']                   = $recurDAO->is_test;
+            $params[$recurDAO->id]['payment_processor_id']      = $recurDAO->payment_processor_id;
+        }
+
+        return $params;
+    }
+
+    /**
+     * update the is_active flag in the db
+     *
+     * @param int      $id        id of the database record
+     * @param boolean  $is_active value we want to set the is_active field
+     *
+     * @return Object             DAO object on sucess, null otherwise
+     * @static
+     */
+    static function setIsActive( $id, $is_active )
+    {
+        if (!$is_active)
+            return self::cancelRecurContribution($id, CRM_Core_DAO::$_nullObject );
+        return false;
+    }
+
 }
 
 

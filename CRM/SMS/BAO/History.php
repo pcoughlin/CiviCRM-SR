@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -116,7 +116,7 @@ class CRM_SMS_BAO_History extends CRM_SMS_DAO_History {
         $params['id'  ] = substr( md5(uniqid(rand(), true)), 0, 31 );
         $params['Type'] = "SMS_TEXT";
 
-        $aggregator =& CRM_SMS_Protocol::singleton( );
+        $aggregator = CRM_SMS_Protocol::singleton( );
         if ( ! $aggregator->sendMessage( $params ) ) {
             return false;
         }

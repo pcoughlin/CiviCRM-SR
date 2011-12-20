@@ -1,7 +1,7 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 3.3                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2010                                |
  +--------------------------------------------------------------------+
@@ -35,112 +35,67 @@
  * @version $Id: Email.php 2011-02-16 ErikHommel $
  */
 
-/**
- * Include utility functions
- */
-require_once 'api/v3/utils.php';
+require_once 'CRM/Core/BAO/Email.php';
 
 /**
- *  Add an Email for a contact
+ * Add an Email for a contact
  * 
  * Allowed @params array keys are:
- * {@schema Core/Email.xml}
- * {@example EmailCreate.php}
- * @return array of newly created email property values.
+ * 
+ * @example EmailCreate.php Standard Create Example
+ * @return array API result array
+ * {@getfields email_create}
  * @access public
  */
 function civicrm_api3_email_create( $params ) 
 {
-
-    civicrm_api3_verify_mandatory ($params, null,array('email', 'contact_id') );
-	/*
-	 * if is_primary is not set in params, set default = 0
-	 */
-	if ( !array_key_exists('is_primary', $params )) {
-		$params['is_primary'] = 0; 
-	}	
-	
-    require_once 'CRM/Core/BAO/Email.php';
-    $emailBAO = CRM_Core_BAO_Email::add($params);
-    
-	 if ( is_a( $emailBAO, 'CRM_Core_Error' )) {
-		 return civicrm_api3_create_error( "Email is not created or updated ");
-	 } else {
-		 $values = array( );
-		 _civicrm_api3_object_to_array($emailBAO, $values[$emailBAO->id]);
-		 return civicrm_api3_create_success($values, $params,'email','create',$emailBAO );
-	 }
-
+    return _civicrm_api3_basic_create(_civicrm_api3_get_BAO(__FUNCTION__), $params);
+}
+/*
+ * Adjust Metadata for Create action
+ * 
+ * The metadata is used for setting defaults, documentation & validation
+ * @param array $params array or parameters determined by getfields
+ */
+function _civicrm_api3_email_create_spec(&$params){
+  $params['is_primary']['api.default'] = 0;// TODO a 'clever' default should be introduced
+  $params['email']['api.required'] = 1;
+  $params['contact_id']['api.required'] = 1;
 }
 /**
  * Deletes an existing Email
  *
  * @param  array  $params
  *
- * {@schema Core/Email.xml}
- * {@example EmailDelete.php 0}
+ * @example EmailDelete.php Standard Delete Example
+ * 
  * @return boolean | error  true if successfull, error otherwise
+ * {@getfields email_delete}
  * @access public
  */
 function civicrm_api3_email_delete( $params ) 
 {
-
-    civicrm_api3_verify_mandatory ($params,null,array ('id'));
-    $emailID = CRM_Utils_Array::value( 'id', $params );
-
-    require_once 'CRM/Core/DAO/Email.php';
-    $emailDAO = new CRM_Core_DAO_Email();
-    $emailDAO->id = $emailID;
-    if ( $emailDAO->find( ) ) {
-		while ( $emailDAO->fetch() ) {
-			$emailDAO->delete();
-			return civicrm_api3_create_success();
-		}
-	} else {
-		return civicrm_api3_create_error( 'Could not delete email with id '.$emailID);
-	}
-    
-
+    return _civicrm_api3_basic_delete(_civicrm_api3_get_BAO(__FUNCTION__), $params);
 }
 
 /**
  * Retrieve one or more emails 
  *
- * @param  mixed[]  (reference ) input parameters
+ * @param  array input parameters
  * 
- * {@schema Core/Email.xml}
- * {@example EmailDelete.php 0}
+ * 
+ * @example EmailGet.php Standard Get Example
+ * 
  * @param  array $params  an associative array of name/value pairs.
  *
- * @return  array details of found emails else error
+ * @return  array api result array
+ * {@getfields email_get}
  * @access public
  */
 
 function civicrm_api3_email_get($params) 
 {   
 
-    civicrm_api3_verify_one_mandatory($params, null, 
-		array('id', 'contact_id', 'location_type_id','email'));
-	
-    require_once 'CRM/Core/BAO/Email.php';
-    $emailBAO = new CRM_Core_BAO_Email();
-    $fields = array_keys($emailBAO->fields());
-
-    foreach ( $fields as $name) {
-        if (array_key_exists($name, $params)) {
-            $emailBAO->$name = $params[$name];
-        }
-    }
-    
-    if ( $emailBAO->find() ) {
-      $emails = array();
-      while ( $emailBAO->fetch() ) {
-        CRM_Core_DAO::storeValues( $emailBAO, $email );
-        $emails[$emailBAO->id] = $email;
-      }
-      return civicrm_api3_create_success($emails,$params,'email','get',$emailBAO);
-    } else {
-      return civicrm_api3_create_success(array(),$params,'email','get',$emailBAO);
-    }
+    return _civicrm_api3_basic_get(_civicrm_api3_get_BAO(__FUNCTION__), $params);
 
 }

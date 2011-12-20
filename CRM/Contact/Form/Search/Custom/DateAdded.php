@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -58,7 +58,7 @@ class CRM_Contact_Form_Search_Custom_DateAdded
         $form->addDate( 'start_date', ts('Start Date'), false, array( 'formatType' => 'custom') );    
         $form->addDate( 'end_date', ts('End Date'), false, array( 'formatType' => 'custom') );
         
-        $groups =& CRM_Core_PseudoConstant::group( );
+        $groups = CRM_Core_PseudoConstant::group( );
         $inG =& $form->addElement('advmultiselect', 'includeGroups', 
                                   ts('Include Group(s)') . ' ', $groups,
                                   array('size'  => 5,

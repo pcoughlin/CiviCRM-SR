@@ -1,6 +1,6 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -34,7 +34,7 @@
     {/if}
     {if !empty($form.address.$blockId.postal_code)}
        <td>
-          {$form.address.$blockId.postal_code.label}<span style="padding-left:35px;">{ts}Suffix{/ts}</span><br />
+          {$form.address.$blockId.postal_code.label}<br />
           {$form.address.$blockId.postal_code.html}
           {$form.address.$blockId.postal_code_suffix.html}<br />
           <span class="description font-italic" style="white-space:nowrap;">{ts}Enter optional 'add-on' code after the dash ('plus 4' code for U.S. addresses).{/ts}</span>

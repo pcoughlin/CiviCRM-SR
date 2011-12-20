@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -66,7 +66,14 @@ class CRM_Contact_BAO_Relationship extends CRM_Contact_DAO_Relationship
         $valid = $invalid = $duplicate = $saved = 0;
         require_once 'CRM/Utils/Array.php';
         $relationshipId = CRM_Utils_Array::value( 'relationship', $ids );
-        
+        //CRM-9015 - the hooks are called here & in add (since add doesn't call create)
+        // but in future should be tidied per ticket
+        require_once 'CRM/Utils/Hook.php';
+        if ( CRM_Utils_Array::value( 'relationship', $ids ) ) {
+            CRM_Utils_Hook::pre( 'edit', 'Relationship', $ids['relationship'], $params );
+        } else {
+            CRM_Utils_Hook::pre( 'create', 'Relationship', null, $params ); 
+        }  
         if ( ! $relationshipId ) {
             // creating a new relationship
             $dataExists = self::dataExists( $params );
@@ -267,9 +274,7 @@ class CRM_Contact_BAO_Relationship extends CRM_Contact_DAO_Relationship
      * Function to get get list of relationship type based on the contact type.
      *
      * @param int     $contactId      this is the contact id of the current contact.
-     * @param string  $strContact     it's  values are 'a or b' if value is 'a' then selected contact is the
-     *                                value of contac_id_a for the relationship and if value is 'b' 
-     *                                then selected contact is the value of contac_id_b for the relationship
+     * @param string  $strContact     this value is currently ignored, keeping it there for legacy reasons
      * @param string  $relationshipId the id of the existing relationship if any
      * @param string  $contactType    contact type
      * @param boolean $all            if true returns relationship types in both the direction
@@ -285,7 +290,7 @@ class CRM_Contact_BAO_Relationship extends CRM_Contact_DAO_Relationship
      *
      * @return array - array reference of all relationship types with context to current contact.
      */
-    function getContactRelationshipType( $contactId = null, $contactSuffix, $relationshipId, 
+    function getContactRelationshipType( $contactId = null, $contactSuffix = null, $relationshipId = null, 
                                          $contactType = null, $all = false, $column = 'label', 
                                          $biDirectional = true, $contactSubType = null, $onlySubTypeRelationTypes = false )
     {
@@ -311,15 +316,11 @@ class CRM_Contact_BAO_Relationship extends CRM_Contact_DAO_Relationship
             }
         }
         
+        $contactSubType = array();
         if ( $contactId ) {
-            $contact     = new CRM_Contact_BAO_Contact();
-            $contact->id = $contactId;
-            if ( $contact->find(true) ) {
-                $contactType = $contact->contact_type;
-                if ( $contact->contact_sub_type ) {
-                    $contactSubType = $contact->contact_sub_type;
-                }
-            } 
+            require_once 'CRM/Contact/BAO/Contact.php';
+            $contactType    = CRM_Contact_BAO_Contact::getContactType( $contactId );
+            $contactSubType = CRM_Contact_BAO_Contact::getContactSubType( $contactId );
         }
 
         foreach ($allRelationshipType as $key => $value) {
@@ -327,7 +328,7 @@ class CRM_Contact_BAO_Relationship extends CRM_Contact_DAO_Relationship
             if ( ( ( ! $value['contact_type_a'] ) || $value['contact_type_a'] == $contactType ) &&
                  // the other contact type is required or present or matches
                  ( ( ! $value['contact_type_b'] ) || ( ! $otherContactType ) || $value['contact_type_b'] == $otherContactType ) &&
-                 ( ( $value['contact_sub_type_a'] == $contactSubType ) || 
+                 ( in_array( $value['contact_sub_type_a'], $contactSubType ) || 
                    ( (!$value['contact_sub_type_b'] && !$value['contact_sub_type_a']) && !$onlySubTypeRelationTypes) ) ) {
                 $relationshipType[ $key . '_a_b' ] =  $value[ "{$column}_a_b" ];
                      
@@ -336,7 +337,7 @@ class CRM_Contact_BAO_Relationship extends CRM_Contact_DAO_Relationship
             if ( ( ( ! $value['contact_type_b'] ) || $value['contact_type_b'] == $contactType ) &&
                  ( ( ! $value['contact_type_a'] ) || ( ! $otherContactType ) || $value['contact_type_a'] == $otherContactType ) &&
                  ( ( (!$value['contact_sub_type_a'] && !$value['contact_sub_type_b']) && !$onlySubTypeRelationTypes) 
-                   || ( $value['contact_sub_type_b'] == $contactSubType ) ) ) {
+                   || in_array( $value['contact_sub_type_b'], $contactSubType ) ) ) {
                 $relationshipType[ $key . '_b_a' ] = $value[ "{$column}_b_a" ];
             }
             
@@ -549,8 +550,10 @@ class CRM_Contact_BAO_Relationship extends CRM_Contact_DAO_Relationship
 
             if ( ( ( ! $relationshipType->contact_type_a )     || ( $relationshipType->contact_type_a == $contact_type_a ) )         &&
                  ( ( ! $relationshipType->contact_type_b )     || ( $relationshipType->contact_type_b == $contact_type_b ) )         &&
-                 ( ( ! $relationshipType->contact_sub_type_a ) || ( $relationshipType->contact_sub_type_a == $contact_sub_type_a ) ) && 
-                 ( ( ! $relationshipType->contact_sub_type_b ) || ( $relationshipType->contact_sub_type_b == $contact_sub_type_b ) )   ) {
+                 ( ( ! $relationshipType->contact_sub_type_a ) || ( in_array( $relationshipType->contact_sub_type_a, 
+                                                                              $contact_sub_type_a ) ) ) && 
+                 ( ( ! $relationshipType->contact_sub_type_b ) || ( in_array( $relationshipType->contact_sub_type_b, 
+                                                                              $contact_sub_type_b ) ) )  ) {
                 return true;
             } else {
                 return false;
@@ -1191,6 +1194,12 @@ SELECT relationship_type_id, relationship_direction
                             $membershipValues['status_id']     = $deceasedStatusId;
                             $membershipValues['skipStatusCal'] = true;
                         }
+                        foreach ( array( 'join_date', 'start_date', 'end_date' ) as $dateField  ) {
+                            if ( CRM_Utils_Array::value($dateField, $membershipValues) ) {
+                                $membershipValues[$dateField] = CRM_Utils_Date::processDate($membershipValues[$dateField]);
+                            }
+                        }
+
                         if ( $action & CRM_Core_Action::UPDATE ) {
                             //delete the membership record for related
                             //contact before creating new membership record.
@@ -1313,5 +1322,27 @@ cc.sort_name LIKE '%$name%'";
 
         return $employers;
     }
-}
+    
+	static function getValidContactTypeList( $relType )
+	{
+		$rel_parts = explode('_', $relType); // string looks like 4_a_b
+	    $allRelationshipType = CRM_Core_PseudoConstant::relationshipType( 'label' );
+	    require_once "CRM/Core/BAO/UFGroup.php";
+	    $contactProfiles = CRM_Core_BAO_UFGroup::getReservedProfiles( 'Contact', null );
+	    
+	    if ($rel_parts[1] == 'a') {
+	       $leftType = $allRelationshipType[$rel_parts[0]]['contact_type_b'];
+	    } else {
+	       $leftType = $allRelationshipType[$rel_parts[0]]['contact_type_a'];
+	    }
 
+	    $contactTypes = array();
+	    foreach ($contactProfiles as $key => $value) {
+    		if (strpos($value, $leftType) !== FALSE) {
+                $contactTypes = array( $key => $value );
+	   	    }
+	    }
+	    
+	    return $contactTypes;
+	}
+}

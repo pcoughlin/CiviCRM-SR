@@ -1,6 +1,6 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -44,7 +44,7 @@
     	<fieldset id="priceset" class="crm-group priceset-group">
             <tr class="crm-event-eventfees-form-block-price_set_amount">  
             <td class="label" style="padding-top: 10px;">{$form.amount.label}</td>
-	    <td class="view-value"><table class="form-layout">{include file="CRM/Price/Form/PriceSet.tpl"}</td>
+	    <td class="view-value"><table class="form-layout">{include file="CRM/Price/Form/PriceSet.tpl" extends="Event"}</td>
      	</fieldset>
         {else}
 	    {assign var=isRecordPayment value=0 }
@@ -281,8 +281,13 @@ function checkEmail( ) {
      
      function fillTotalAmount( totalAmount ) {
           if ( !totalAmount ) {
-     	      var eventFeeBlockValues = {/literal}{$eventFeeBlockValues}{literal};
-	      totalAmount = eval('eventFeeBlockValues.amount_id_'+{/literal}{$form.amount.value}{literal});
+	      var amountVal = {/literal}{if $form.amount.value}{$form.amount.value}{else}0{/if}{literal};
+	      if ( amountVal > 0 ) {
+     	        var eventFeeBlockValues = {/literal}{$eventFeeBlockValues}{literal};
+	        totalAmount = eval('eventFeeBlockValues.amount_id_'+ amountVal);
+              } else {
+	        totalAmount = '';
+	      }
 	  }
           cj('#total_amount').val( totalAmount );
      }

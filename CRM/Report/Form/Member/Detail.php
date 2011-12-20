@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -49,6 +49,7 @@ class CRM_Report_Form_Member_Detail extends CRM_Report_Form {
     
     protected $_customGroupExtends = array( 'Membership' );
     protected $_customGroupGroupBy = false;
+        
     function __construct( ) {
         $this->_columns = 
             array( 'civicrm_contact' =>

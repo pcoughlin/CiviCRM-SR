@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -174,7 +174,7 @@ class CRM_Core_BAO_OptionValue extends CRM_Core_DAO_OptionValue
    WHERE civicrm_option_group.name = 'activity_type'
          AND civicrm_option_value.value =  {$activityTypeId} ";
 
-        $dao   =& CRM_Core_DAO::executeQuery( $query );
+        $dao   = CRM_Core_DAO::executeQuery( $query );
         
         $dao->fetch( );
 

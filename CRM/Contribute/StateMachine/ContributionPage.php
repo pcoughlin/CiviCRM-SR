@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -65,10 +65,10 @@ class CRM_Contribute_StateMachine_ContributionPage extends CRM_Core_StateMachine
                               'CRM_Member_Form_MembershipBlock'               => null,
                               'CRM_Contribute_Form_ContributionPage_ThankYou' => null,
                               'CRM_Friend_Form_Contribute'                    => null,
+                              'CRM_PCP_Form_Contribute'                       => null,
                               'CRM_Contribute_Form_ContributionPage_Custom'   => null,
                               'CRM_Contribute_Form_ContributionPage_Premium'  => null,
-                              'CRM_Contribute_Form_ContributionPage_Widget'   => null,
-                              'CRM_Contribute_Form_ContributionPage_PCP'      => null
+                              'CRM_Contribute_Form_ContributionPage_Widget'   => null
                               );
         
         if ( !in_array("CiviMember", $config->enableComponents ) ) {

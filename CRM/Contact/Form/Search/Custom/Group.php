@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -94,9 +94,9 @@ class CRM_Contact_Form_Search_Custom_Group
     
     function buildForm( &$form ) {
 
-        $groups         =& CRM_Core_PseudoConstant::group( );
+        $groups         = CRM_Core_PseudoConstant::group( );
 
-        $tags           =& CRM_Core_PseudoConstant::tag( );
+        $tags           = CRM_Core_PseudoConstant::tag( );
         if ( count($groups) == 0 || count($tags) == 0 ) {
             CRM_Core_Session::setStatus( ts("Atleast one Group and Tag must be present, for Custom Group / Tag search.") );
             $url = CRM_Utils_System::url( 'civicrm/contact/search/custom/list', 'reset=1' );
@@ -213,6 +213,7 @@ class CRM_Contact_Form_Search_Custom_Group
         $this->_tableName = "civicrm_temp_custom_{$randomNum}";
 
         //block for Group search
+        $iGroups = $xGroups = null;
         $smartGroup = array( );
         if ( $this->_groups || $this->_allSearch ) { 
             require_once 'CRM/Contact/DAO/Group.php';
@@ -351,6 +352,7 @@ class CRM_Contact_Form_Search_Custom_Group
             }
         }//group contact search end here;
 
+        $iTags = $xTags = null;
         //block for Tags search
         if ( $this->_tags || $this->_allSearch ) {
             //find all tags 

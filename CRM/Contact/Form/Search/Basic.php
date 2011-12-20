@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -76,8 +76,9 @@ class CRM_Contact_Form_Search_Basic extends CRM_Contact_Form_Search {
         // text for sort_name or email criteria
         $this->add('text', 'sort_name', ts('Name or Email'));
 
-        require_once 'CRM/Core/BAO/Preferences.php';
-        $searchOptions = CRM_Core_BAO_Preferences::valueOptions( 'advanced_search_options' );
+        require_once 'CRM/Core/BAO/Setting.php';
+        $searchOptions = CRM_Core_BAO_Setting::valueOptions( CRM_Core_BAO_Setting::SYSTEM_PREFERENCES_NAME,
+                                                             'advanced_search_options' );
         
         if ( CRM_Utils_Array::value( 'contactType', $searchOptions ) ) {
             require_once 'CRM/Contact/BAO/ContactType.php';
@@ -210,22 +211,23 @@ class CRM_Contact_Form_Search_Basic extends CRM_Contact_Form_Search {
             
             //fix for CRM-1505
             if (CRM_Core_DAO::getFieldValue( 'CRM_Contact_DAO_SavedSearch', $this->_ssID, 'mapping_id' ) ) {
-                $this->_params =& CRM_Contact_BAO_SavedSearch::getSearchParams( $this->_ssID );
+                $this->_params = CRM_Contact_BAO_SavedSearch::getSearchParams( $this->_ssID );
             }
         }
 	    
         // we dont want to store the sortByCharacter in the formValue, it is more like 
         // a filter on the result set
         // this filter is reset if we click on the search button
-        if ( $this->_sortByCharacter && empty( $_POST ) ) {
-            if ( $this->_sortByCharacter == 1 ) {
+        if ( $this->_sortByCharacter !== null
+             && empty( $_POST ) ) {
+            if ( strtolower( $this->_sortByCharacter ) == 'all' ) {
                 $this->_formValues['sortByCharacter'] = null;
             } else {
                 $this->_formValues['sortByCharacter'] = $this->_sortByCharacter;
             }
         }
         
-        $this->_params =& CRM_Contact_BAO_Query::convertFormValues( $this->_formValues );
+        $this->_params = CRM_Contact_BAO_Query::convertFormValues( $this->_formValues );
         $this->_returnProperties =& $this->returnProperties( );
         
         // CRM_Core_Error::debug( 'f', $this->_formValues );

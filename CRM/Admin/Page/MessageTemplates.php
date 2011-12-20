@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -71,7 +71,7 @@ class CRM_Admin_Page_MessageTemplates extends CRM_Core_Page_Basic
                 )
             )
         ';
-        $dao =& CRM_Core_DAO::executeQuery($sql);
+        $dao = CRM_Core_DAO::executeQuery($sql);
         while ($dao->fetch()) {
             $this->_revertible[$dao->id] = $dao->orig_id;
         }

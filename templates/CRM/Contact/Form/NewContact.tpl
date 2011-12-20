@@ -1,6 +1,6 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -88,6 +88,11 @@
                  close: function(event, ui) {
                      cj('#contact-success-' + blockNo).fadeOut(5000);
         		     cj('#profiles-' + blockNo).val('');
+        		     {/literal}
+        		     {if $newContactCallback}
+                       eval({$newContactCallback});   
+        		     {/if}
+        		     {literal}
                  }
              });
          }

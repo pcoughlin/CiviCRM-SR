@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -47,7 +47,9 @@ class CRM_Admin_Page_Access extends CRM_Core_Page
 
         if ( $config->userFramework == 'Drupal' ) {
             $this->assign('ufAccessURL', CRM_Utils_System::url( 'admin/people/permissions' ) );
-        } else {
+        } elseif ( $config->userFramework == 'Drupal6' ){
+            $this->assign('ufAccessURL', CRM_Utils_System::url( 'admin/user/permissions' ) );
+        } elseif ( $config->userFramework == 'Joomla' ) {
             JHTML::_( 'behavior.modal' );
 			$url = $config->userFrameworkBaseURL .
                    "index.php?option=com_config&view=component&component=com_civicrm&tmpl=component";

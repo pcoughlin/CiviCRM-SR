@@ -1,7 +1,7 @@
 <?php
 /*
 +--------------------------------------------------------------------+
-| CiviCRM version 4.0                                                |
+| CiviCRM version 4.1                                                |
 +--------------------------------------------------------------------+
 | Copyright CiviCRM LLC (c) 2004-2011                                |
 +--------------------------------------------------------------------+
@@ -193,6 +193,12 @@ class CRM_Core_DAO_ActionSchedule extends CRM_Core_DAO
      */
     public $recipient_manual;
     /**
+     * listing based on recipient field.
+     *
+     * @var string
+     */
+    public $recipient_listing;
+    /**
      * Body of the mailing in text format.
      *
      * @var longtext
@@ -234,6 +240,12 @@ class CRM_Core_DAO_ActionSchedule extends CRM_Core_DAO
      * @var int unsigned
      */
     public $msg_template_id;
+    /**
+     * Date on which the reminder be sent.
+     *
+     * @var date
+     */
+    public $absolute_date;
     /**
      * class constructor
      *
@@ -389,6 +401,13 @@ class CRM_Core_DAO_ActionSchedule extends CRM_Core_DAO
                     'maxlength' => 128,
                     'size' => CRM_Utils_Type::HUGE,
                 ) ,
+                'recipient_listing' => array(
+                    'name' => 'recipient_listing',
+                    'type' => CRM_Utils_Type::T_STRING,
+                    'title' => ts('Recipient Listing') ,
+                    'maxlength' => 128,
+                    'size' => CRM_Utils_Type::HUGE,
+                ) ,
                 'body_text' => array(
                     'name' => 'body_text',
                     'type' => CRM_Utils_Type::T_LONGTEXT,
@@ -427,6 +446,11 @@ class CRM_Core_DAO_ActionSchedule extends CRM_Core_DAO
                     'type' => CRM_Utils_Type::T_INT,
                     'FKClassName' => 'CRM_Core_DAO_MessageTemplates',
                 ) ,
+                'absolute_date' => array(
+                    'name' => 'absolute_date',
+                    'type' => CRM_Utils_Type::T_DATE,
+                    'title' => ts('Absolute Date') ,
+                ) ,
             );
         }
         return self::$_fields;
@@ -461,7 +485,7 @@ class CRM_Core_DAO_ActionSchedule extends CRM_Core_DAO
     {
         if (!(self::$_import)) {
             self::$_import = array();
-            $fields = & self::fields();
+            $fields = self::fields();
             foreach($fields as $name => $field) {
                 if (CRM_Utils_Array::value('import', $field)) {
                     if ($prefix) {
@@ -484,7 +508,7 @@ class CRM_Core_DAO_ActionSchedule extends CRM_Core_DAO
     {
         if (!(self::$_export)) {
             self::$_export = array();
-            $fields = & self::fields();
+            $fields = self::fields();
             foreach($fields as $name => $field) {
                 if (CRM_Utils_Array::value('export', $field)) {
                     if ($prefix) {

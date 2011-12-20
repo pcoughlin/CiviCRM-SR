@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -77,8 +77,9 @@ class CRM_Contact_Form_Search_Advanced extends CRM_Contact_Form_Search
 
         $this->_searchPane = CRM_Utils_Array::value( 'searchPane', $_GET );
         
-        require_once 'CRM/Core/BAO/Preferences.php';
-        $this->_searchOptions = CRM_Core_BAO_Preferences::valueOptions( 'advanced_search_options' );
+        require_once 'CRM/Core/BAO/Setting.php';
+        $this->_searchOptions = CRM_Core_BAO_Setting::valueOptions( CRM_Core_BAO_Setting::SYSTEM_PREFERENCES_NAME,
+                                                                    'advanced_search_options' );
 
         if ( ! $this->_searchPane || $this->_searchPane == 'basic' ) {
             CRM_Contact_Form_Search_Criteria::basic( $this );
@@ -191,7 +192,6 @@ class CRM_Contact_Form_Search_Advanced extends CRM_Contact_Form_Search
      * @return array the default array reference
      */
     function &setDefaultValues() {
-        
         $defaults = $this->_formValues;
         $this->normalizeDefaultValues( $defaults );
         
@@ -200,8 +200,10 @@ class CRM_Contact_Form_Search_Advanced extends CRM_Contact_Form_Search
         } else {
             $defaults['task'] = CRM_Contact_Task::PRINT_CONTACTS;
         }
+        
+        $defaults['privacy_toggle'] = 1;
 
-       return $defaults;
+        return $defaults;
     }
 
     /**
@@ -284,8 +286,9 @@ class CRM_Contact_Form_Search_Advanced extends CRM_Contact_Form_Search
         // we dont want to store the sortByCharacter in the formValue, it is more like 
         // a filter on the result set
         // this filter is reset if we click on the search button
-        if ( $this->_sortByCharacter && empty( $_POST ) ) {
-            if ( $this->_sortByCharacter == 1 ) {
+        if ( $this->_sortByCharacter !== null
+             && empty( $_POST ) ) {
+            if ( strtolower( $this->_sortByCharacter ) == 'all' ) {
                 $this->_formValues['sortByCharacter'] = null;
             } else {
                 $this->_formValues['sortByCharacter'] = $this->_sortByCharacter;
@@ -296,7 +299,7 @@ class CRM_Contact_Form_Search_Advanced extends CRM_Contact_Form_Search
         CRM_Core_BAO_CustomValue::fixFieldValueOfTypeMemo( $this->_formValues );
         
         require_once 'CRM/Contact/BAO/Query.php';
-        $this->_params =& CRM_Contact_BAO_Query::convertFormValues( $this->_formValues );
+        $this->_params = CRM_Contact_BAO_Query::convertFormValues( $this->_formValues );
         $this->_returnProperties =& $this->returnProperties( );
         parent::postProcess( );
     }

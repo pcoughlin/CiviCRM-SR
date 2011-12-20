@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -52,7 +52,7 @@ class CRM_Event_BAO_Query
     static function &getParticipantFields( $onlyParticipant = false ) 
     {
         require_once 'CRM/Event/BAO/Participant.php';
-        $fields =& CRM_Event_BAO_Participant::importableFields( 'Individual', true, $onlyParticipant );
+        $fields = CRM_Event_BAO_Participant::importableFields( 'Individual', true, $onlyParticipant );
         return $fields;
     }
     
@@ -197,7 +197,7 @@ class CRM_Event_BAO_Query
  
             // get discount name
             if ( CRM_Utils_Array::value( 'participant_discount_name', $query->_returnProperties ) ) {
-                $query->_select['participant_discount_name']      = "discount_name.label as participant_discount_name";
+                $query->_select['participant_discount_name']      = "discount_name.title as participant_discount_name";
                 $query->_element['participant_discount_name']     = 1;
                 $query->_tables['civicrm_discount']               = 1;
                 $query->_tables['participant_discount_name']      = 1;
@@ -218,6 +218,9 @@ class CRM_Event_BAO_Query
         $isTest   = false;
         $grouping = null;
         foreach ( array_keys( $query->_params ) as $id ) {
+            if ( !CRM_Utils_Array::value(0, $query->_params[$id]) ) {
+                continue;
+            }
             if ( substr( $query->_params[$id][0], 0, 6) == 'event_' ||
                  substr( $query->_params[$id][0], 0, 12) == 'participant_') {
                 if ( $query->_mode == CRM_Contact_BAO_QUERY::MODE_CONTACTS ) {

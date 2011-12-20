@@ -1,6 +1,6 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -30,6 +30,14 @@
             <td class="label">{$form.dashboardCacheTimeout.label}</td>
             <td>{$form.dashboardCacheTimeout.html}<br />
                 <span class="description">{ts}The number of minutes to cache dashlet content on dashboard.{/ts}</span></td>
+        </tr>
+    </table>
+
+    <table class="form-layout">
+        <tr class="crm-miscellaneous-form-block-checksumTimeout">
+            <td class="label">{$form.checksumTimeout.label}</td>
+            <td>{$form.checksumTimeout.html}<br />
+                <span class="description">{ts}The number of days before a personalized (hashed) link will expire.{/ts}</span></td>
         </tr>
     </table>
 

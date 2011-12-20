@@ -1,6 +1,6 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -23,7 +23,6 @@
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
 *}
-{php} echo '<script type="text/javascript"> var Screen_Reader='.CRM_Core_BAO_Preferences::variableGet("Screen_Reader").'; </script>'; {/php}
 {literal}
 <script type="text/javascript">
 cj( function( ) {
@@ -61,7 +60,7 @@ eval('tableId =[' + tableId + ']');
     var id = -1; var count = 0; var columns=''; var sortColumn = '';
     //build columns array for sorting or not sorting
     cj(tabId + ' th').each( function( ) {
-        var option = cj(this).attr('id').split("_");
+        var option = cj(this).prop('id').split("_");
         option  = ( option.length > 1 ) ? option[1] : option[0];
         stype   = 'numeric';
         switch( option ) { 
@@ -75,13 +74,8 @@ eval('tableId =[' + tableId + ']');
                 if ( cj(this).attr('class') == 'sortable' ){
                     sortColumn += '[' + count + ', "asc" ],';
                 }
-                sortId   = getRowId(tdObject, cj(this).attr('id') +' hiddenElement' );
-                 //Dhaval: Added this if loop to display the arrows based on visually impaired profile param
-                if(Screen_Reader){
-                columns += '{"sType": "html"},';
-                }else{
+                sortId   = getRowId(tdObject, cj(this).attr('id') +' hiddenElement' ); 
                 columns += '{ "sType": \'' + stype + '\', "fnRender": function (oObj) { return oObj.aData[' + sortId + ']; },"bUseRendered": false},';
-                }  
             break;
             case 'nosort':           
                 columns += '{ "bSortable": false, "sClass": "'+ getElementClass( this ) +'"},';
@@ -121,7 +115,9 @@ eval('tableId =[' + tableId + ']');
     	        }
   	    }
 	}
-	
+
+    var noRecordFoundMsg  = {/literal}{ts}'There are no records.'{/ts}{literal};
+ 
     oTable = null;
     if ( useAjax ) {
       oTable = cj(tabId).dataTable({
@@ -135,30 +131,35 @@ eval('tableId =[' + tableId + ']');
               "sDom"       : '<"crm-datatable-pager-top"lfp>rt<"crm-datatable-pager-bottom"ip>',
               "bServerSide": true,
               "sAjaxSource": sourceUrl,
+        	  "oLanguage":{"sEmptyTable"  : noRecordFoundMsg,
+		                   "sZeroRecords" : noRecordFoundMsg },
 
-		{/literal}{if !empty($callBack)}{literal}
-		"fnDrawCallback": function() { checkSelected(); },
-		{/literal}{/if}{literal}
+              {/literal}{if !empty($callBack)}{literal}
+              "fnDrawCallback": function() { checkSelected(); },
+              {/literal}{/if}{literal}
 
-		"fnServerData": function ( sSource, aoData, fnCallback ) {
-			cj.ajax( {
-				"dataType": 'json', 
-				"type": "POST", 
-				"url": sSource, 
-				"data": aoData, 
-				"success": fnCallback
-			} ); }
+              "fnServerData": function ( sSource, aoData, fnCallback ) {
+                cj.ajax( {
+                  "dataType": 'json', 
+                  "type": "POST", 
+                  "url": sSource, 
+                  "data": aoData, 
+                  "success": fnCallback
+                }); 
+              }
      		}); 
     } else {
       oTable = cj(tabId).dataTable({
-			"aaSorting"    : sortColumn,
-             	        "bPaginate"    : false,
-                	"bLengthChange": true,
-                	"bFilter"      : false,
-                	"bInfo"        : false,
-                	"bAutoWidth"   : false,
-               		"aoColumns"   : columns
-    			 }); 
+                "aaSorting"    : sortColumn,
+                "bPaginate"    : false,
+                "bLengthChange": true,
+                "bFilter"      : false,
+                "bInfo"        : false,
+                "bAutoWidth"   : false,
+                "aoColumns"   : columns,
+        		"oLanguage":{"sEmptyTable"  : noRecordFoundMsg,
+		                     "sZeroRecords" : noRecordFoundMsg }
+              }); 
     }
     var object;
 

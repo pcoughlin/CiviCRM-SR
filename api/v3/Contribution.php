@@ -1,7 +1,7 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -39,7 +39,7 @@
 /**
  * Include utility functions
  */
-require_once 'api/v3/utils.php';
+require_once 'CRM/Contribute/BAO/Contribution.php';
 require_once 'CRM/Utils/Rule.php';
 require_once 'CRM/Contribute/PseudoConstant.php';
 
@@ -48,27 +48,23 @@ require_once 'CRM/Contribute/PseudoConstant.php';
  *
  * @param  array   $params           (reference ) input parameters
  *
- * @return array (reference )        contribution_id of created or updated record
+ * @return array  Api result array
  * @static void
  * @access public
  * @example ContributionCreate.php
+ * {@getfields Contribution_create}
  */
 function civicrm_api3_contribution_create($params) {
-		civicrm_api3_verify_mandatory ( $params, null, array ('contact_id', 'total_amount', array ('contribution_type_id', 'contribution_type' ) ) );
+		civicrm_api3_verify_one_mandatory ( $params, null,  array ('contribution_type_id', 'contribution_type'  ) );
 		
-		$error = _civicrm_api3_contribute_check_params ( $params );
-		if (civicrm_api3_error ( $error )) {
-			return $error;
-		}
 		
 		$values = array ();
 		
-		require_once 'CRM/Contribute/BAO/Contribution.php';
 		$error = _civicrm_api3_contribute_format_params ( $params, $values );
-		if (civicrm_api3_error ( $error )) {
+		if (civicrm_error ( $error )) {
 			return $error;
 		}
-		
+		_civicrm_api3_custom_format_params ( $params, $values, 'Contribution' );
 		$values ["contact_id"] = $params ["contact_id"];
 		$values ["source"] = CRM_Utils_Array::value ( 'source', $params );
 		
@@ -85,7 +81,25 @@ function civicrm_api3_contribution_create($params) {
 		return civicrm_api3_create_success ( $contributeArray, $params, 'contribution',$contribution );
 
 }
-
+/*
+ * Adjust Metadata for Create action
+ * 
+ * The metadata is used for setting defaults, documentation & validation
+ * @param array $params array or parameters determined by getfields
+ */
+function _civicrm_api3_contribution_create_spec(&$params){
+  $params['contact_id']['api.required'] =1;
+  $params['total_amount']['api.required'] =1;
+  $params['note'] = array('name' => 'note',
+                                           'title' => 'note',
+                                           'type' => 2,
+                                           'description' => 'Associated Note in the notes table');
+   $params['soft_credit_to'] = array('name' => 'soft_credit_to',
+                                           'title' => 'Soft Credit contact ID',
+                                           'type' => 1,
+                                           'description' => 'ID of Contact to be Soft credited to',
+                                           'FKClassName' => 'CRM_Contact_DAO_Contact');
+}
 /**
  * Delete a contribution
  *
@@ -94,18 +108,24 @@ function civicrm_api3_contribution_create($params) {
  * @return boolean        true if success, else false
  * @static void
  * @access public
+ * {@getfields Contribution_delete}
+ * @example ContributionDelete.php
  */
 function civicrm_api3_contribution_delete($params) {
 
-		civicrm_api3_verify_one_mandatory ( $params, null, array ('contribution_id','id' ) );
 		$contributionID = CRM_Utils_Array::value ( 'contribution_id', $params )? $params['contribution_id']:$params['id'];
-		require_once 'CRM/Contribute/BAO/Contribution.php';
 		if (CRM_Contribute_BAO_Contribution::deleteContribution ( $contributionID )) {
 			return civicrm_api3_create_success ( array ($contributionID => 1 ) );
 		} else {
 			return civicrm_api3_create_error ( 'Could not delete contribution' );
 		}
 
+}
+/*
+ * modify metadata. Legacy support for contribution_id
+ */
+function _civicrm_api3_contribution_delete_spec( &$params ) {
+  $params['id']['api.aliases']= array('contribution_id');
 }
 
 /**
@@ -119,10 +139,11 @@ function civicrm_api3_contribution_delete($params) {
  * @return array (reference )        array of contributions, if error an array with an error id and error message
  * @static void
  * @access public
+ * {@getfields Contribution_get}
+ * @example ContributionGet.php
  */
 function civicrm_api3_contribution_get($params) {
 
-		civicrm_api3_verify_mandatory ( $params );
 		if(CRM_Utils_Array::value('id', $params) ){
     //api supports 'id' but BAO supports 'contribution_id. Change it here
 		  $params['contribution_id'] = CRM_Utils_Array::value('contribution_id', $params,$params['id']);
@@ -146,19 +167,13 @@ function civicrm_api3_contribution_get($params) {
 			}
 		}
 		
-		// add is_test to the clause if not present
-		if (! array_key_exists ( 'contribution_test', $inputParams )) {
-			$inputParams ['contribution_test'] = 0;
-		}
-		
 		require_once 'CRM/Contribute/BAO/Query.php';
 		require_once 'CRM/Contact/BAO/Query.php';
 		if (empty ( $returnProperties )) {
 			$returnProperties = CRM_Contribute_BAO_Query::defaultReturnProperties ( CRM_Contact_BAO_Query::MODE_CONTRIBUTE );
 		}
-		
+
 		$newParams = & CRM_Contact_BAO_Query::convertFormValues ( $inputParams );
-		
 		$query = new CRM_Contact_BAO_Query( $newParams, $returnProperties, null,
                                             false, false, CRM_Contact_BAO_Query::MODE_CONTRIBUTE );
 		list ( $select, $from, $where, $having ) = $query->query ();
@@ -181,68 +196,18 @@ function civicrm_api3_contribution_get($params) {
 
 }
 /*
- * Return valid fields for API
+ * Adjust Metadata for Get action
+ * 
+ * The metadata is used for setting defaults, documentation & validation
+ * @param array $params array or parameters determined by getfields
  */
-function civicrm_api3_contribution_getfields( $params ) {
-    $fields =  _civicrm_api_get_fields('contribution') ;
-    $fields['note'] = array('name' => 'note',
-                                           'title' => 'note',
-                                           'type' => 2,
-                                           'description' => 'Associated Note in the notes table');
-
-
-    return civicrm_api3_create_success($fields );
-}
-/**
- * This function ensures that we have the right input contribution parameters
- *
- * We also need to make sure we run all the form rules on the params list
- * to ensure that the params are valid
- *
- * @param array  $params       Associative array of property name/value
- * pairs to insert in new contribution.
- *
- * @return bool|CRM_Utils_Error
- * @access private
- */
-function _civicrm_api3_contribute_check_params($params) {
-	
-	// check params for contribution id during update
-	if (CRM_Utils_Array::value ( 'id', $params )) {
-		require_once 'CRM/Contribute/BAO/Contribution.php';
-		$contributor = new CRM_Contribute_BAO_Contribution ();
-		$contributor->id = $params ['id'];
-		if (! $contributor->find ( true )) {
-			return civicrm_api3_create_error ( 'Contribution id is not valid' );
-		}
-		// do not check other field during update
-		return array ();
-	}
-	
-	return array ();
+function _civicrm_api3_contribution_get_spec(&$params){
+  $params['contribution_test']['api.default'] =0;
+  $params['contact_id'] = $params['contribution_contact_id'];
+  $params['contact_id']['api.aliases'] = array('contribution_contact_id');
+  unset($params['contribution_contact_id']);
 }
 
-/**
- * Check if there is a contribution with the same trxn_id or invoice_id
- *
- * @param array  $params       Associative array of property name/value
- * pairs to insert in new contribution.
- *
- * @return array|CRM_Error
- * @access private
- */
-function _civicrm_api3_contribute_duplicate_check($params) {
-	require_once 'CRM/Contribute/BAO/Contribution.php';
-	$duplicates = array ();
-	$result = CRM_Contribute_BAO_Contribution::checkDuplicate ( $params, $duplicates );
-	if ($result) {
-		$d = implode ( ', ', $duplicates );
-		$error = CRM_Core_Error::createError ( "Duplicate error - existing contribution record(s) have a matching Transaction ID or Invoice ID. Contribution record ID(s) are: $d", CRM_Core_Error::DUPLICATE_CONTRIBUTION, 'Fatal', $d );
-		return civicrm_api3_create_error ( $error->pop (), $d );
-	} else {
-		return array ();
-	}
-}
 
 /**
  * take the input parameter list as specified in the data model and 
@@ -271,22 +236,7 @@ function _civicrm_api3_contribute_format_params($params, &$values, $create = fal
 		}
 		
 		switch ($key) {
-			
-			case 'contribution_contact_id' :
-				if (! CRM_Utils_Rule::integer ( $value )) {
-					return civicrm_api3_create_error ( "contact_id not valid: $value" );
-				}
-				$dao = new CRM_Core_DAO ();
-				$qParams = array ();
-				$svq = $dao->singleValueQuery ( "SELECT id FROM civicrm_contact WHERE id = $value", $qParams );
-				if (! $svq) {
-					return civicrm_api3_create_error ( "Invalid Contact ID: There is no contact record with contact_id = $value." );
-				}
 				
-				$values ['contact_id'] = $values ['contribution_contact_id'];
-				unset ( $values ['contribution_contact_id'] );
-				break;
-			
 		
 			case 'non_deductible_amount' :
 			case 'total_amount' :
@@ -336,20 +286,8 @@ function _civicrm_api3_contribute_format_params($params, &$values, $create = fal
 		$values ['note'] = $params ['note'];
 	}
 	
-	_civicrm_api3_custom_format_params ( $params, $values, 'Contribution' );
-	
-	if ($create) {
-		// CRM_Contribute_BAO_Contribution::add() handles contribution_source
-		// So, if $values contains contribution_source, convert it to source
-		$changes = array ('contribution_source' => 'source' );
-		
-		foreach ( $changes as $orgVal => $changeVal ) {
-			if (isset ( $values [$orgVal] )) {
-				$values [$changeVal] = $values [$orgVal];
-				unset ( $values [$orgVal] );
-			}
-		}
-	}
+
+
 	
 	return array ();
 }
@@ -365,17 +303,6 @@ function _civicrm_api3_contribute_format_params($params, &$values, $create = fal
  * 
  */
 function civicrm_api3_contribution_transact($params) {
-
-		civicrm_api3_verify_mandatory ( $params );
-		
-		$values = array ();
-		
-		require_once 'CRM/Contribute/BAO/Contribution.php';
-		$error = _civicrm_api3_contribute_format_params ( $params, $values );
-		if (civicrm_api3_error ( $error )) {
-			return $error;
-		}
-		
 		$required = array ('amount' );
 		foreach ( $required as $key ) {
 			if (! isset ( $params [$key] )) {
@@ -404,18 +331,18 @@ function civicrm_api3_contribution_transact($params) {
 		
 		require_once 'CRM/Core/BAO/PaymentProcessor.php';
 		$paymentProcessor = CRM_Core_BAO_PaymentProcessor::getPayment ( $params ['payment_processor_id'], $params ['payment_processor_mode'] );
-		if (civicrm_api3_error ( $paymentProcessor )) {
+		if (civicrm_error ( $paymentProcessor )) {
 			return $paymentProcessor;
 		}
 		
 		require_once 'CRM/Core/Payment.php';
 		$payment = & CRM_Core_Payment::singleton ( $params ['payment_processor_mode'], $paymentProcessor );
-		if (civicrm_api3_error ( $payment )) {
+		if (civicrm_error ( $payment )) {
 			return $payment;
 		}
 		
 		$transaction = $payment->doDirectPayment ( $params );
-		if (civicrm_api3_error ( $transaction )) {
+		if (civicrm_error ( $transaction )) {
 			return $transaction;
 		}
 		
@@ -429,8 +356,8 @@ function civicrm_api3_contribution_transact($params) {
 			}
 		}
 		
-		$contribution = civicrm_contribution_add ( $params );
-		return $contribution;
+		$contribution = civicrm_api( 'contribution', 'create', $params );
+		return $contribution['values'];
 
 }
 

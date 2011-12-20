@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -30,7 +30,7 @@
  *
  * @package CRM
  * @copyright CiviCRM LLC (c) 2004-2011
- * $Id: Display.php 34485 2011-05-26 14:01:39Z deepak $
+ * $Id: Display.php 37809 2011-12-05 18:22:31Z lobo $
  *
  */
 
@@ -43,24 +43,50 @@ require_once 'CRM/Admin/Form/Preferences.php';
 class CRM_Admin_Form_Preferences_Display extends CRM_Admin_Form_Preferences
 {
     function preProcess( ) {
+        CRM_Utils_System::setTitle(ts('Settings - Display Preferences'));
+
+        $this->_varNames =
+            array( CRM_Core_BAO_Setting::SYSTEM_PREFERENCES_NAME =>
+                   array( 
+                         'contact_view_options' => array( 'html_type' => 'checkboxes',
+                                                          'title'     => ts( 'Viewing Contacts'    ),
+                                                          'weight'    => 1 ),
+                         'contact_edit_options' => array( 'html_type' => 'checkboxes',
+                                                          'title'     => ts( 'Editing Contacts'    ),
+                                                          'weight'    => 2 ),
+                         'advanced_search_options' => array( 'html_type' => 'checkboxes',
+                                                             'title'     => ts( 'Contact Search'   ),
+                                                             'weight'    => 3 ),
+                         'activity_assignee_notification' => array( 'html_type' => 'checkbox',
+                                                                    'title'     => ts( 'Notify Activity Assignees'   ),
+                                                                    'weight'    => 5 ),
+                         'contact_ajax_check_similar' => array( 'html_type' => 'checkbox',
+                                                                'title'     => ts( 'Check for Similar Contacts'   ),
+                                                                'weight'    => 5 ),
+                         'user_dashboard_options' => array( 'html_type' => 'checkboxes',
+                                                            'title'     => ts( 'Contact Dashboard' ),
+                                                            'weight'    => 6 ),
+                         'display_name_format' => array( 'html_type' => 'textarea',
+                                                         'title' => ts('Individual Display Name Format'),
+                                                         'weight'    => 7 ),
+                         'sort_name_format' => array( 'html_type' => 'textarea',
+                                                      'title' => ts('Individual Sort Name Format'), 
+                                                      'weight'    => 8 ),
+                         'editor_id' => array( 'html_type' => null,                               
+                                               'weight'    => 9 ),
+                          ),
+                   );
+
+
         parent::preProcess( );
-        CRM_Utils_System::setTitle(ts('Settings - Site Preferences'));
-        // add all the checkboxes
-        $this->_cbs = array(
-                            'contact_view_options'    => ts( 'Viewing Contacts'  ),
-                            'contact_edit_options'    => ts( 'Editing Contacts'  ),
-                            'advanced_search_options' => ts( 'Contact Search'    ),
-                            'user_dashboard_options'  => ts( 'Contact Dashboard' )
-                            );
     }
 
     function setDefaultValues( ) {
-        $defaults = array( );
-        $config =& CRM_Core_Config::singleton();
-
+        $defaults = parent::setDefaultValues();
         parent::cbsDefaultValues( $defaults );
+
         if ( $this->_config->editor_id ) {
-            $defaults['wysiwyg_editor'] = $this->_config->editor_id ;
+            $defaults['editor_id'] = $this->_config->editor_id ;
         }
         if ( empty( $this->_config->display_name_format ) ) {
             $defaults['display_name_format'] = "{contact.individual_prefix}{ }{contact.first_name}{ }{contact.last_name}{ }{contact.individual_suffix}";
@@ -74,7 +100,9 @@ class CRM_Admin_Form_Preferences_Display extends CRM_Admin_Form_Preferences
             $defaults['sort_name_format'] = $this->_config->sort_name_format;
         }
 
-        if ( $config->userFramework == 'Drupal' && module_exists("wysiwyg")) {
+        $config = CRM_Core_Config::singleton();
+        if ( $config->userSystem->is_drupal == '1' &&
+             module_exists("wysiwyg")) {
             $defaults['wysiwyg_input_format'] = variable_get('civicrm_wysiwyg_input_format', 0);
         }
  
@@ -92,7 +120,7 @@ class CRM_Admin_Form_Preferences_Display extends CRM_Admin_Form_Preferences
         $drupal_wysiwyg = false;
         $wysiwyg_options = array( '' => ts( 'Textarea' ) ) + CRM_Core_PseudoConstant::wysiwygEditor( );
 
-        $config =& CRM_Core_Config::singleton();
+        $config = CRM_Core_Config::singleton();
         $extra = array();
 
         //if not using Joomla, remove Joomla default editor option
@@ -101,7 +129,8 @@ class CRM_Admin_Form_Preferences_Display extends CRM_Admin_Form_Preferences
         }
 
         $drupal_wysiwyg = false;
-        if ( $config->userFramework != 'Drupal' || !module_exists("wysiwyg")) {
+        if ( ! $config->userSystem->is_drupal ||
+             ! module_exists("wysiwyg")) {
             unset( $wysiwyg_options[4] );
         } else {
             $extra['onchange'] = 'if (this.value==4) { cj("#crm-preferences-display-form-block-wysiwyg_input_format").show(); } else {  cj("#crm-preferences-display-form-block-wysiwyg_input_format").hide() }';
@@ -112,15 +141,11 @@ class CRM_Admin_Form_Preferences_Display extends CRM_Admin_Form_Preferences
             }
             $drupal_wysiwyg = true;
         }
-        $this->addElement( 'select', 'wysiwyg_editor', ts('WYSIWYG Editor'), $wysiwyg_options, $extra);
+        $this->addElement( 'select', 'editor_id', ts('WYSIWYG Editor'), $wysiwyg_options, $extra);
         
         if ($drupal_wysiwyg) {
           $this->addElement( 'select', 'wysiwyg_input_format', ts('Input Format'), $format_options, null);
         }
- 
-        $this->addElement('textarea','display_name_format', ts('Individual Display Name Format'));  
-        $this->addElement('textarea','sort_name_format',    ts('Individual Sort Name Format'));
-                
         require_once 'CRM/Core/OptionGroup.php';
         $editOptions = CRM_Core_OptionGroup::values( 'contact_edit_options', false, false, false, 'AND v.filter = 0' );
         $this->assign( 'editOptions', $editOptions );
@@ -128,7 +153,7 @@ class CRM_Admin_Form_Preferences_Display extends CRM_Admin_Form_Preferences
         $contactBlocks = CRM_Core_OptionGroup::values( 'contact_edit_options', false, false, false, 'AND v.filter = 1' );
         $this->assign( 'contactBlocks', $contactBlocks );
 
-        $this->addElement('hidden','contact_edit_prefences', null, array('id'=> 'contact_edit_prefences') );
+        $this->addElement('hidden','contact_edit_preferences', null, array('id'=> 'contact_edit_preferences') );
 
         parent::buildQuickForm( );
     }
@@ -142,15 +167,14 @@ class CRM_Admin_Form_Preferences_Display extends CRM_Admin_Form_Preferences
      */
     public function postProcess() 
     {
-        $config =& CRM_Core_Config::singleton();
         if ( $this->_action == CRM_Core_Action::VIEW ) {
             return;
         }
 
         $this->_params = $this->controller->exportValues( $this->_name );
         
-        if ( CRM_Utils_Array::value( 'contact_edit_prefences', $this->_params ) ) {
-            $preferenceWeights = explode( ',' , $this->_params['contact_edit_prefences'] );
+        if ( CRM_Utils_Array::value( 'contact_edit_preferences', $this->_params ) ) {
+            $preferenceWeights = explode( ',' , $this->_params['contact_edit_preferences'] );
             foreach( $preferenceWeights as $key => $val ) {
                 if ( !$val ) {
                     unset($preferenceWeights[$key]);
@@ -161,19 +185,19 @@ class CRM_Admin_Form_Preferences_Display extends CRM_Admin_Form_Preferences
             CRM_Core_BAO_OptionValue::updateOptionWeights( $opGroupId, array_flip($preferenceWeights) );
         }
 
-        if ( $config->userFramework == 'Drupal' && module_exists("wysiwyg")) {
+        $config = CRM_Core_Config::singleton();
+        if ( $config->userSystem->is_drupal == '1' &&
+             module_exists("wysiwyg")) {
             variable_set('civicrm_wysiwyg_input_format', $this->_params['wysiwyg_input_format']);
         }
         
-        $this->_config->editor_id = $this->_params['wysiwyg_editor'];
-        $this->_config->display_name_format = $this->_params['display_name_format'];
-        $this->_config->sort_name_format    = $this->_params['sort_name_format'];
+        $this->_config->editor_id = $this->_params['editor_id'];
 
         // set default editor to session if changed
         $session = CRM_Core_Session::singleton();
-        $session->set( 'defaultWysiwygEditor', $this->_params['wysiwyg_editor'] );
+        $session->set( 'defaultWysiwygEditor', $this->_params['editor_id'] );
         
-        parent::postProcess( );
+        $this->postProcessCommon( );
     }//end of function
 
 }

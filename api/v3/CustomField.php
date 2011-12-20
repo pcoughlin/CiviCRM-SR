@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -39,7 +39,6 @@
 /**
  * Files required for this package
  */
-require_once 'api/v3/utils.php';
 require_once 'CRM/Core/BAO/CustomField.php';
 
 /**
@@ -64,15 +63,13 @@ require_once 'CRM/Core/BAO/CustomField.php';
  * @access public
  * 
  * @example CustomFieldCreate.php
- * 
+ * {@getfields CustomField_create}
  * {@example CustomFieldCreate.php 0}
  *
  */
 
 function civicrm_api3_custom_field_create( $params )
 {
-
-        civicrm_api3_verify_mandatory($params,null,array('custom_group_id','label'));
         
         if ( !( CRM_Utils_Array::value('option_type', $params ) ) ) {
             if( CRM_Utils_Array::value('id', $params ) ){
@@ -101,7 +98,15 @@ function civicrm_api3_custom_field_create( $params )
         return civicrm_api3_create_success($values,$params, 'custom_field',$customField);
 
 }
-
+/*
+ * Adjust Metadata for Create action
+ * 
+ * @param array $params array or parameters determined by getfields
+ */
+function _civicrm_api3_custom_field_create_spec(&$params){
+  $params['label']['api.required'] = 1;
+  $params['custom_group_id']['api.required'] = 1; 
+}
 /**
  * Use this API to delete an existing custom group field.
  *
@@ -109,12 +114,12 @@ function civicrm_api3_custom_field_create( $params )
  * @example CustomFieldDelete.php
  * 
  * {@example CustomFieldDelete.php 0}
+ * {@getfields CustomField_delete}
  * @access public
  **/
 function civicrm_api3_custom_field_delete( $params )
 {
-        civicrm_api3_verify_mandatory($params,null,array('id'));
-        
+       
         $field = new CRM_Core_BAO_CustomField( );
         $field->id = $params['id'];
         $field->find(true);
@@ -132,14 +137,12 @@ function civicrm_api3_custom_field_delete( $params )
  * Use this API to get existing custom fields.
  *
  * @param array $params Array to search on
- *
+ *{@getfields CustomField_get}
 * @access public
  * 
  **/
 function civicrm_api3_custom_field_get($params)
 {
-
-        civicrm_api3_verify_mandatory($params);
         return _civicrm_api3_basic_get(_civicrm_api3_get_BAO(__FUNCTION__), $params);
 
 }

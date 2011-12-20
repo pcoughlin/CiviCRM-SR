@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -199,7 +199,7 @@ class CRM_Contribute_Form_Search extends CRM_Core_Form
         } 
 
         require_once 'CRM/Contact/BAO/Query.php';
-        $this->_queryParams =& CRM_Contact_BAO_Query::convertFormValues( $this->_formValues );
+        $this->_queryParams = CRM_Contact_BAO_Query::convertFormValues( $this->_formValues );
         $selector = new CRM_Contribute_Selector_Search( $this->_queryParams,
                                                         $this->_action,
                                                         null,
@@ -246,7 +246,11 @@ class CRM_Contribute_Form_Search extends CRM_Core_Form
     function buildQuickForm( ) 
     {
         // text for sort_name 
-        $this->addElement('text', 'sort_name', ts('Contributor Name or Email'), CRM_Core_DAO::getAttribute('CRM_Contact_DAO_Contact', 'sort_name') );
+        $this->addElement('text', 
+                          'sort_name', 
+                          ts('Contributor Name or Email'), 
+                          CRM_Core_DAO::getAttribute('CRM_Contact_DAO_Contact', 
+                                                     'sort_name') );
         
         require_once 'CRM/Contribute/BAO/Query.php';
         CRM_Contribute_BAO_Query::buildSearchForm( $this );
@@ -259,7 +263,11 @@ class CRM_Contribute_Form_Search extends CRM_Core_Form
         $rows = $this->get( 'rows' ); 
         if ( is_array( $rows ) ) {
             if ( !$this->_single ) {
-                $this->addElement( 'checkbox', 'toggleSelect', null, null, array( 'onclick' => "toggleTaskAction( true ); return toggleCheckboxVals('mark_x_',this);" ) ); 
+                $this->addElement( 'checkbox',
+                                   'toggleSelect', 
+                                   null, 
+                                   null, 
+                                   array( 'onclick' => "toggleTaskAction( true ); return toggleCheckboxVals('mark_x_',this);" ) ); 
                 foreach ($rows as $row) { 
                     $this->addElement( 'checkbox', $row['checkbox'], 
                                        null, null, 
@@ -348,7 +356,7 @@ class CRM_Contribute_Form_Search extends CRM_Core_Form
         CRM_Core_BAO_CustomValue::fixFieldValueOfTypeMemo( $this->_formValues );
         
         require_once 'CRM/Contact/BAO/Query.php';
-        $this->_queryParams =& CRM_Contact_BAO_Query::convertFormValues( $this->_formValues ); 
+        $this->_queryParams = CRM_Contact_BAO_Query::convertFormValues( $this->_formValues ); 
 
         $this->set( 'formValues' , $this->_formValues  );
         $this->set( 'queryParams', $this->_queryParams );
@@ -372,7 +380,7 @@ class CRM_Contribute_Form_Search extends CRM_Core_Form
         } 
 
         require_once 'CRM/Contact/BAO/Query.php';
-        $this->_queryParams =& CRM_Contact_BAO_Query::convertFormValues( $this->_formValues );
+        $this->_queryParams = CRM_Contact_BAO_Query::convertFormValues( $this->_formValues );
         $selector = new CRM_Contribute_Selector_Search( $this->_queryParams,
                                                         $this->_action,
                                                         null,

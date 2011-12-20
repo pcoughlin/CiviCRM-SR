@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -118,10 +118,12 @@ class CRM_Core_Smarty extends Smarty {
         
         // check default editor and assign to template, store it in session to reduce db calls
         $defaultWysiwygEditor = $session->get( 'defaultWysiwygEditor');
-        if ( !$defaultWysiwygEditor && !CRM_Core_Config::isUpgradeMode() ) {
-            require_once 'CRM/Core/BAO/Preferences.php';
-            $defaultWysiwygEditor = CRM_Core_BAO_Preferences::value( 'editor_id' );            
-            $session->set( 'defaultWysiwygEditor', $defaultWysiwygEditor );
+        if ( ! $defaultWysiwygEditor && 
+             ! CRM_Core_Config::isUpgradeMode( ) ) {
+            require_once 'CRM/Core/BAO/Setting.php';
+            $editorID = CRM_Core_BAO_Setting::getItem( CRM_Core_BAO_Setting::SYSTEM_PREFERENCES_NAME,
+                                                   'editor_id' );
+            $session->set( 'defaultWysiwygEditor', $editorID );
         }
         
         $this->assign( 'defaultWysiwygEditor', $defaultWysiwygEditor );
@@ -139,16 +141,18 @@ class CRM_Core_Smarty extends Smarty {
             $this->assign('langSwitch', CRM_Core_I18n::languages(true));
         }
         
-        //check if logged in use has access CiviCRM permission and build menu
+        //check if logged in user has access CiviCRM permission and build menu
         require_once 'CRM/Core/Permission.php';
         $buildNavigation = CRM_Core_Permission::check( 'access CiviCRM' );
         $this->assign('buildNavigation', $buildNavigation );
         
-        if ( !CRM_Core_Config::isUpgradeMode() && $buildNavigation ) {
+
+        if ( ! CRM_Core_Config::isUpgradeMode() && 
+             $buildNavigation ) {
             require_once 'CRM/Core/BAO/Navigation.php';
             $contactID = $session->get('userID');
             if ( $contactID ) {
-                $navigation =& CRM_Core_BAO_Navigation::createNavigation( $contactID );
+                $navigation = CRM_Core_BAO_Navigation::createNavigation( $contactID );
                 $this->assign('navigation', $navigation );
             }
         }

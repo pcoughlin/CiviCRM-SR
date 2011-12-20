@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -95,7 +95,7 @@ class CRM_Report_Form_Pledge_Pbnp extends CRM_Report_Form {
                           ),
                    
                    'civicrm_pledge_payment'  =>
-                   array( 'dao'       => 'CRM_Pledge_DAO_Payment',
+                   array( 'dao'       => 'CRM_Pledge_DAO_PledgePayment',
                           'fields'    =>
                           array( 'scheduled_date' =>
                                  array( 'title'    => ts( 'Next Payment Due' ),

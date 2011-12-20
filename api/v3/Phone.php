@@ -1,7 +1,7 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 3.3                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2010                                |
  +--------------------------------------------------------------------+
@@ -44,15 +44,14 @@ require_once 'CRM/Core/BAO/Phone.php';
  *  Add an Phone for a contact
  * 
  * Allowed @params array keys are:
- * {@schema Core/Phone.xml}
- * {@example PhoneCreate.php}
+ * {@getfields phone_create}
+ * @example PhoneCreate.php
  * @return array of newly created phone property values.
  * @access public
  */
 function civicrm_api3_phone_create( $params ) 
 {
 
-    civicrm_api3_verify_one_mandatory ($params, null, array ('contact_id', 'id'));
 	/*
 	 * if is_primary is not set in params, set default = 0
 	 */
@@ -109,20 +108,30 @@ function civicrm_api3_phone_create( $params )
 	 }
 
 }
+
+/*
+ * Adjust Metadata for Create action
+ * 
+ * The metadata is used for setting defaults, documentation & validation
+ * @param array $params array or parameters determined by getfields
+ */
+function _civicrm_api3_phone_create_spec(&$params){
+  $params['contact_id']['api.required'] =1;
+  $params['phone']['api.required'] =1;
+}
 /**
  * Deletes an existing Phone
  *
  * @param  array  $params
  *
- * {@schema Core/Phone.xml}
- * {@example PhoneDelete.php 0}
- * @return boolean | error  true if successfull, error otherwise
+ * @return array Api Result
+ * {@getfields phone_delete}
+ * @example PhoneDelete.php
  * @access public
  */
 function civicrm_api3_phone_delete( $params ) 
 {
 
-    civicrm_api3_verify_mandatory ($params,null,array ('id'));
     $phoneID = CRM_Utils_Array::value( 'id', $params );
 
     require_once 'CRM/Core/DAO/Phone.php';
@@ -140,26 +149,10 @@ function civicrm_api3_phone_delete( $params )
 
 }
 
+
 /**
- * Retrieve one or more phones 
+ *  civicrm_api('Phone','Get') to retrieve one or more phones is implemented by
+ *  function civicrm_api3_phone_get ($params) into the file Phone/Get.php
+ *  Could have been implemented here in this file too, but we moved it to illustrate the feature with a real usage.
  *
- * @param  mixed[]  (reference ) input parameters
- * 
- * {@schema Core/Phone.xml}
- * {@example PhoneDelete.php 0}
- * @param  array $params  an associative array of name/value pairs.
- *
- * @return  array details of found phones else error
- * @access public
  */
-
-function civicrm_api3_phone_get($params) 
-{   
-
-    civicrm_api3_verify_mandatory($params);
-
-    return _civicrm_api3_basic_get(_civicrm_api3_get_BAO(__FUNCTION__), $params);
- 
-
-}
-

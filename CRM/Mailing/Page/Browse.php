@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -133,7 +133,7 @@ class CRM_Mailing_Page_Browse extends CRM_Core_Page
         $this->preProcess();
         if ( isset( $_GET['runJobs'] ) || CRM_Utils_Array::value( '2', $newArgs ) == 'queue' ) {
             require_once 'CRM/Mailing/BAO/Job.php';
-            $config =& CRM_Core_Config::singleton();
+            $config = CRM_Core_Config::singleton();
 
 
             CRM_Mailing_BAO_Job::runJobs_pre( $config->mailerJobSize );
@@ -146,7 +146,7 @@ class CRM_Mailing_Page_Browse extends CRM_Core_Page
                                                                $this );
 
 
-        if ( $this->_sortByCharacter == 1 ||
+        if ( strtolower( $this->_sortByCharacter ) == 'all' ||
              ! empty( $_POST ) ) {
             $this->_sortByCharacter = '';
             $this->set( 'sortByCharacter', '' );
@@ -224,12 +224,12 @@ class CRM_Mailing_Page_Browse extends CRM_Core_Page
         $selector->setParent( $this );
         
         $controller = new CRM_Core_Selector_Controller(
-                                                        $selector ,
-                                                        $this->get( CRM_Utils_Pager::PAGE_ID ),
-                                                        $this->get( CRM_Utils_Sort::SORT_ID ).$this->get(CRM_Utils_Sort::SORT_DIRECTION),
-                                                        CRM_Core_Action::VIEW, 
-                                                        $this, 
-                                                        CRM_Core_Selector_Controller::TEMPLATE );
+                                                       $selector ,
+                                                       $this->get( CRM_Utils_Pager::PAGE_ID ),
+                                                       $this->get( CRM_Utils_Sort::SORT_ID ).$this->get(CRM_Utils_Sort::SORT_DIRECTION),
+                                                       CRM_Core_Action::VIEW, 
+                                                       $this, 
+                                                       CRM_Core_Selector_Controller::TEMPLATE );
         
         $controller->setEmbedded( true );
         $controller->run( );
@@ -315,9 +315,11 @@ class CRM_Mailing_Page_Browse extends CRM_Core_Page
         }
 
         if ( $sortBy &&
-             $this->_sortByCharacter ) {
-            $clauses[] = 'name LIKE %2';
-            $params[2] = array( $this->_sortByCharacter . '%', 'String' );
+             $this->_sortByCharacter !== null ) {
+            $clauses[] = 
+                "name LIKE '" . 
+                strtolower(CRM_Core_DAO::escapeWildCardString($this->_sortByCharacter)) .
+                "%'";
         }
         
         $campainIds = $this->get( 'campaign_id' );

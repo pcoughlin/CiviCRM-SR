@@ -1,6 +1,6 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -74,10 +74,11 @@
     {literal}
 
     var sourceDataUrl = "{/literal}{$dataUrl}{literal}";
-    var tokenDataUrl  = "{/literal}{$tokenUrl}{literal}";
+    var tokenDataUrl_target  = "{/literal}{$tokenUrl}&context=activity_target{literal}";
+    var tokenDataUrl_assignee  = "{/literal}{$tokenUrl}&context=activity_assignee{literal}";
     var hintText = "{/literal}{ts}Type in a partial or complete name of an existing contact.{/ts}{literal}";
-    cj( "#target_contact_id"  ).tokenInput( tokenDataUrl, { prePopulate: target_contact,   theme: 'facebook', hintText: hintText });
-    cj( "#assignee_contact_id").tokenInput( tokenDataUrl, { prePopulate: assignee_contact, theme: 'facebook', hintText: hintText });
+    cj( "#target_contact_id"  ).tokenInput( tokenDataUrl_target,   { prePopulate: target_contact,   theme: 'facebook', hintText: hintText });
+    cj( "#assignee_contact_id").tokenInput( tokenDataUrl_assignee, { prePopulate: assignee_contact, theme: 'facebook', hintText: hintText });
     cj( 'ul.token-input-list-facebook, div.token-input-dropdown-facebook' ).css( 'width', '450px' );
     cj('#source_contact_id').autocomplete( sourceDataUrl, { width : 180, selectFirst : false, hintText: hintText, matchContains: true, minChars: 1
                                 }).result( function(event, data, formatted) { cj( "#source_contact_qid" ).val( data[1] );
@@ -283,7 +284,9 @@
 					 	<div class="crm-accordion-body">
                         <table class="form-layout-compressed">
                            <tr><td class="label">{ts}Schedule Follow-up Activity{/ts}</td>
-                               <td>{$form.followup_activity_type_id.html}&nbsp;{$form.interval.label}&nbsp;{$form.interval.html}&nbsp;{$form.interval_unit.html}                          </td>
+                               <td>{$form.followup_activity_type_id.html}&nbsp;&nbsp;{ts}on{/ts}
+                                {include file="CRM/common/jcalendar.tpl" elementName=followup_date}
+                               </td>
                            </tr>
                            <tr>
                               <td class="label">{$form.followup_activity_subject.label}</td>
@@ -295,7 +298,13 @@
 					{literal} 
 					<script type="text/javascript">
 					cj(function() {
-					   cj().crmaccordions(); 
+  					    cj().crmaccordions(); 
+                       	cj('.crm-accordion-body').each( function() {
+                       		//open tab if form rule throws error
+                       		if ( cj(this).children( ).find('span.crm-error').text( ).length > 0 ) {
+                       			cj(this).parent( ).removeClass( 'crm-accordion-closed' ).addClass('crm-accordion-open');
+                       		}
+                       	});
 					});
 					</script>
 					{/literal}
@@ -315,7 +324,7 @@
 		            {if ($context eq 'fulltext' || $context eq 'search') && $searchKey}
 		                {assign var='urlParams' value="reset=1&atype=$atype&action=update&reset=1&id=$entityID&cid=$contactId&context=$context&key=$searchKey"}
 		            {/if}
-                    <a href="{crmURL p='civicrm/contact/view/activity' q=$urlParams}" class="edit button" title="{ts}Edit{/ts}"><span><div class="icon edit-icon"></div>{ts}Edit{/ts}</span></a>
+                    <a href="{crmURL p='civicrm/activity/add' q=$urlParams}" class="edit button" title="{ts}Edit{/ts}"><span><div class="icon edit-icon"></div>{ts}Edit{/ts}</span></a>
                  {/if}
                  
                  {if call_user_func(array('CRM_Core_Permission','check'), 'delete activities')}

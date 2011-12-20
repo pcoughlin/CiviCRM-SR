@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -104,8 +104,11 @@ class CRM_Mailing_Form_Settings extends CRM_Core_Form
         require_once 'CRM/Mailing/PseudoConstant.php';
 
         $this->addElement('checkbox', 'override_verp', ts('Track Replies?'));
-        $defaults['override_verp'] = defined('CIVICRM_TRACK_CIVIMAIL_REPLIES') ? CIVICRM_TRACK_CIVIMAIL_REPLIES : false;
 
+        require_once 'CRM/Core/BAO/Setting.php';
+        $defaults['override_verp'] = CRM_Core_BAO_Setting::getItem( CRM_Core_BAO_Setting::MAILING_PREFERENCES_NAME,
+                                                                    'track_civimail_replies', null, false );
+        
         $this->add('checkbox', 'forward_replies', ts('Forward Replies?'));
         $defaults['forward_replies'] = false;
         
@@ -135,18 +138,7 @@ class CRM_Mailing_Form_Settings extends CRM_Core_Form
         
         //FIXME : currently we are hiding save an continue later when
         //search base mailing, we should handle it when we fix CRM-3876
-        $buttons = array( array ( 'type'      => 'back',
-                                  'name'      => ts('<< Previous') ),
-                          array ( 'type'      => 'next',
-                                  'name'      => ts('Next >>'),
-                                  'spacing' => '&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;',
-                                  'isDefault' => true   ),
-                          array ( 'type'      => 'submit',
-                                  'name'      => ts('Save & Continue Later') ),
-                          array ( 'type'      => 'cancel',
-                                  'name'      => ts('Cancel') ),
-                          );
-        if ( $this->_searchBasedMailing && $this->get( 'ssID' ) ) {
+        if ( $this->_searchBasedMailing ) {
             $buttons = array( array ( 'type'      => 'back',
                                       'name'      => ts('<< Previous') ),
                               array ( 'type'      => 'next',
@@ -156,7 +148,20 @@ class CRM_Mailing_Form_Settings extends CRM_Core_Form
                               array ( 'type'      => 'cancel',
                                       'name'      => ts('Cancel') ),
                               );
+        } else {
+            $buttons = array( array ( 'type'      => 'back',
+                                      'name'      => ts('<< Previous') ),
+                              array ( 'type'      => 'next',
+                                      'name'      => ts('Next >>'),
+                                      'spacing' => '&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;',
+                                      'isDefault' => true   ),
+                              array ( 'type'      => 'submit',
+                                      'name'      => ts('Save & Continue Later') ),
+                              array ( 'type'      => 'cancel',
+                                      'name'      => ts('Cancel') ),
+                              );
         }
+
         $this->addButtons( $buttons );
         
         $this->setDefaults($defaults);

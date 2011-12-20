@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -88,14 +88,6 @@ class CRM_Contribute_PseudoConstant extends CRM_Core_PseudoConstant
      * @static
      */
     private static $contributionStatus;
-
-    /**
-     * pcp status 
-     *
-     * @var array
-     * @static
-     */
-    private static $pcpStatus;
 
     /**
      * Personal campaign pages
@@ -274,22 +266,6 @@ class CRM_Contribute_PseudoConstant extends CRM_Core_PseudoConstant
         
         return $result;
     }
-
-    /**
-     * Get all the pcp status
-     *
-     * @access public
-     * @return array - array reference of all pcp status
-     * @static
-     */
-    public static function &pcpStatus( )
-    {
-        self::$pcpStatus = array();
-        if ( ! self::$pcpStatus ) {
-            self::$pcpStatus = CRM_Core_OptionGroup::values("pcp_status");
-        }
-        return self::$pcpStatus;
-    }
     
     /**
      * Get all the Personal campaign pages
@@ -298,17 +274,24 @@ class CRM_Contribute_PseudoConstant extends CRM_Core_PseudoConstant
      * @return array - array reference of all pcp if any
      * @static
      */
-    public static function &pcPage($id = null)
+    public static function &pcPage( $pageType = null, $id = null)
     {
-        if ( ! self::$pcPage ) {
-            CRM_Core_PseudoConstant::populate( self::$pcPage,
-                                               'CRM_Contribute_DAO_PCP',
-                                               false, 'title' );
+        if ( ! isset( self::$pcPage[$pageType] ) ) {
+            if ( $pageType ) {
+                $params =  "page_type='{$pageType}'";
+            } else {
+                $params = '';
+            }
+            CRM_Core_PseudoConstant::populate( self::$pcPage[$pageType],
+                                               'CRM_PCP_DAO_PCP',
+                                               false, 'title', 'is_active', $params );
         }
+        $result = self::$pcPage[$pageType];
         if ( $id ) {
-            return CRM_Utils_Array::value( $id, self::$pcPage );
+            return $result = CRM_Utils_Array::value( $id, $result );
         }
-        return self::$pcPage;
+
+        return $result;
     }
 
 }

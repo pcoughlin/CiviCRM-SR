@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -381,6 +381,28 @@ class CRM_Contact_Selector_Custom extends CRM_Core_Selector_Base implements CRM_
         $sql = $this->_search->contactIDs( $params );
 
         return CRM_Core_DAO::executeQuery( $sql, $params );
+    }
+
+    function addActions( &$rows ) {
+        $links       = self::links( );
+        
+        $permissions = array( CRM_Core_Permission::getPermission( ) );
+        if ( CRM_Core_Permission::check( 'delete contacts' )  ) {
+            $permissions[] = CRM_Core_Permission::DELETE;
+        }
+        $mask = CRM_Core_Action::mask( $permissions );
+        
+        foreach ( $rows as $id => &$row ) {
+            $row['action']   = CRM_Core_Action::formLink( $links,
+                                                          $mask ,
+                                                          array( 'id' => $row['contact_id'] ) );
+        }
+    }
+
+    function removeActions( &$rows ) {
+        foreach ( $rows as $rid => &$rValue ) {
+            unset( $rValue['action'] );
+        }
     }
 
 }//end of class

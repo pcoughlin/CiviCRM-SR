@@ -1,6 +1,6 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -63,6 +63,14 @@
 </tr>
 
 <tr><td colspan="3">{include file="CRM/common/Tag.tpl" tagsetType='case'}</td></tr>
+
+{if $caseGroupTree }
+<tr>
+    <td colspan="4">
+       {include file="CRM/Custom/Form/Search.tpl" groupTree=$caseGroupTree showHideLinks=false}
+    </td>
+</tr>
+{/if}
 
 {literal}
 <script type="text/javascript">

@@ -1,6 +1,6 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -90,7 +90,8 @@
    </div>
  </div><!-- /.crm-accordion-body -->
 </div><!-- /.crm-accordion-wrapper -->
-<div id='customData'></div>  
+<div id='customData'></div> 
+<script type="text/javascript">var showTab = Array( );</script> 
     {foreach from = $editOptions item = "title" key="name"}
         {include file="CRM/Contact/Form/Edit/$name.tpl"}
     {/foreach}
@@ -194,12 +195,42 @@ function removeDefaultCustomFields( ) {
      if (removeCustomData) {
 	 cj(".crm-accordion-wrapper").children().each( function() {
 	    var eleId = cj(this).attr("id");
-	    if ( eleId.substr(0,10) == "customData" ) { cj(this).parent("div").remove(); }
+	    if ( eleId && eleId.substr(0,10) == "customData" ) { cj(this).parent("div").remove(); }
 	 });
 	 removeCustomData = false;
      }
+
+     var values = cj("#contact_sub_type").val();
+     if ( values ) {
+        var contactType = {/literal}"{$contactType}"{literal};
+        buildCustomData(contactType, values);
+     }
 }
+
+cj(document).ready(function() {
+     if ( cj("#contact_sub_type").val() ) {
+        removeDefaultCustomFields( );
+     }
+});
  
+function warnSubtypeDataLoss( )
+{
+   var submittedSubtypes = cj('#contact_sub_type').val();
+   var defaultSubtypes   = {/literal}{$oldSubtypes}{literal};
+
+   var warning = false;
+   cj.each(defaultSubtypes, function(index, subtype) {
+      if ( cj.inArray(subtype, submittedSubtypes) < 0 ) {
+         warning = true;
+      }
+   });
+
+   if ( warning ) {
+      return confirm( 'One or more contact subtypes have been de-selected from the list for this contact. Any custom data associated with de-selected subtype will be removed. Click OK to proceed, or Cancel to review your changes before saving.' );
+   }
+   return true;
+}
+
 </script>
 {/literal}
 

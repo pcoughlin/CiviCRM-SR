@@ -1,7 +1,7 @@
 <?php
 /*
 +--------------------------------------------------------------------+
-| CiviCRM version 4.0                                                |
+| CiviCRM version 4.1                                                |
 +--------------------------------------------------------------------+
 | Copyright CiviCRM LLC (c) 2004-2011                                |
 +--------------------------------------------------------------------+
@@ -135,6 +135,12 @@ class CRM_Price_DAO_Set extends CRM_Core_DAO
      */
     public $extends;
     /**
+     * FK to Contribution Type(for membership price sets only).
+     *
+     * @var int unsigned
+     */
+    public $contribution_type_id;
+    /**
      * class constructor
      *
      * @access public
@@ -155,6 +161,7 @@ class CRM_Price_DAO_Set extends CRM_Core_DAO
         if (!(self::$_links)) {
             self::$_links = array(
                 'domain_id' => 'civicrm_domain:id',
+                'contribution_type_id' => 'civicrm_contribution_type:id',
             );
         }
         return self::$_links;
@@ -229,6 +236,12 @@ class CRM_Price_DAO_Set extends CRM_Core_DAO
                     'maxlength' => 255,
                     'size' => CRM_Utils_Type::HUGE,
                 ) ,
+                'contribution_type_id' => array(
+                    'name' => 'contribution_type_id',
+                    'type' => CRM_Utils_Type::T_INT,
+                    'default' => 'UL',
+                    'FKClassName' => 'CRM_Contribute_DAO_ContributionType',
+                ) ,
             );
         }
         return self::$_fields;
@@ -241,8 +254,7 @@ class CRM_Price_DAO_Set extends CRM_Core_DAO
      */
     function getTableName()
     {
-        global $dbLocale;
-        return self::$_tableName . $dbLocale;
+        return CRM_Core_DAO::getLocaleTableName(self::$_tableName);
     }
     /**
      * returns if this table needs to be logged
@@ -264,7 +276,7 @@ class CRM_Price_DAO_Set extends CRM_Core_DAO
     {
         if (!(self::$_import)) {
             self::$_import = array();
-            $fields = & self::fields();
+            $fields = self::fields();
             foreach($fields as $name => $field) {
                 if (CRM_Utils_Array::value('import', $field)) {
                     if ($prefix) {
@@ -287,7 +299,7 @@ class CRM_Price_DAO_Set extends CRM_Core_DAO
     {
         if (!(self::$_export)) {
             self::$_export = array();
-            $fields = & self::fields();
+            $fields = self::fields();
             foreach($fields as $name => $field) {
                 if (CRM_Utils_Array::value('export', $field)) {
                     if ($prefix) {

@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -143,7 +143,7 @@ FROM {$etable} e
 WHERE e.id = %1";
 
         $params = array( 1 => array( $eid, 'Integer' ) );
-        $dao =& CRM_Core_DAO::executeQuery( $query, $params );
+        $dao = CRM_Core_DAO::executeQuery( $query, $params );
          while ( $dao->fetch( ) ) {
              $locBlockId = $dao->locId;
          }
@@ -331,7 +331,7 @@ WHERE e.id = %1";
                     $updateParams = array( 'id' => $updateId );
                 }
                 
-                $copy =& CRM_Core_DAO::copyGeneric( 'CRM_Core_DAO_' . $name, array( 'id' => $value ), $updateParams );
+                $copy = CRM_Core_DAO::copyGeneric( 'CRM_Core_DAO_' . $name, array( 'id' => $value ), $updateParams );
                 $copyLocationParams[$key] = $copy->id;
             }
         }

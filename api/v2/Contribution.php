@@ -1,7 +1,7 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -32,7 +32,7 @@
  * @subpackage API_Contribute
  *
  * @copyright CiviCRM LLC (c) 2004-2011
- * @version $Id: Contribution.php 33093 2011-03-16 10:42:29Z shot $
+ * @version $Id: Contribution.php 37506 2011-11-16 13:31:27Z kurund $
  *
  */
 
@@ -202,7 +202,7 @@ function &civicrm_contribution_search( &$params ) {
         $returnProperties = CRM_Contribute_BAO_Query::defaultReturnProperties( CRM_Contact_BAO_Query::MODE_CONTRIBUTE );
     }
     
-    $newParams =& CRM_Contact_BAO_Query::convertFormValues( $inputParams );
+    $newParams = CRM_Contact_BAO_Query::convertFormValues( $inputParams );
 
     $query = new CRM_Contact_BAO_Query( $newParams, $returnProperties, null );
     list( $select, $from, $where, $having ) = $query->query( );
@@ -213,7 +213,7 @@ function &civicrm_contribution_search( &$params ) {
         $sql .= " ORDER BY $sort ";
     }
     $sql .= " LIMIT $offset, $rowCount ";
-    $dao =& CRM_Core_DAO::executeQuery( $sql );
+    $dao = CRM_Core_DAO::executeQuery( $sql );
     
     $contribution = array( );
     while ( $dao->fetch( ) ) {
@@ -361,7 +361,7 @@ function _civicrm_contribute_duplicate_check( &$params ) {
 function _civicrm_contribute_format_params( &$params, &$values, $create=false ) {
     // copy all the contribution fields as is
    
-    $fields =& CRM_Contribute_DAO_Contribution::fields( );
+    $fields = CRM_Contribute_DAO_Contribution::fields( );
 
     _civicrm_store_values( $fields, $params, $values );
 
@@ -533,7 +533,7 @@ function civicrm_contribute_transact($params) {
   }
 
   require_once 'CRM/Core/Payment.php';
-  $payment =& CRM_Core_Payment::singleton( $params['payment_processor_mode'], $paymentProcessor );
+  $payment = CRM_Core_Payment::singleton( $params['payment_processor_mode'], $paymentProcessor );
   if ( civicrm_error($payment) ) {
     return $payment ;
   }

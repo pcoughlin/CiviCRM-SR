@@ -1,7 +1,7 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -25,7 +25,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | eWAY Core Payment Module for CiviCRM version 4.0 & 1.9             |
+ | eWAY Core Payment Module for CiviCRM version 4.1 & 1.9             |
  +--------------------------------------------------------------------+
  | Licensed to CiviCRM under the Academic Free License version 3.0    |
  |                                                                    |
@@ -427,7 +427,7 @@ class CRM_Core_Payment_eWAY extends CRM_Core_Payment
     **************************************************/
    function &errorExit ( $errorCode = null, $errorMessage = null ) 
    {
-       $e =& CRM_Core_Error::singleton( );
+       $e = CRM_Core_Error::singleton( );
        
        if ( $errorCode ) {
            $e->push( $errorCode, 0, null, $errorMessage );

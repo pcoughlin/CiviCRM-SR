@@ -1,7 +1,7 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -47,8 +47,6 @@ function civicrm_group_roles_schema( )
                                                  'fields' => array(
                                                                    'id' => array(
                                                                                  'type' => 'serial', 
-                                                                                 'unsigned' => TRUE, 
-                                                                                 'not null' => TRUE,
                                                                                  ),
                                                                    'role_id' => array(
                                                                                       'type' => 'int', 

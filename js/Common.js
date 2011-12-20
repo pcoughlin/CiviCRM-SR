@@ -1,6 +1,6 @@
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -773,16 +773,4 @@ function activityStatus( message )
             return false;
         }
     } 
-}
-
-window.onload = function(){ 
-	cj(".helpiconanchor").bind("click", function(){ 
-	   newwindow2=window.open('','name','height=250,width=600');
-		var tmp = newwindow2.document;
-		tmp.write('<html><head><title>Help Text Popup</title>');
-		tmp.write('</head><body>');
-	    tmp.write(cj(this).siblings("div.helpicon").find(".crm-help").html());
-		tmp.write('</body></html>');
-		tmp.close(); 
-	});
 }

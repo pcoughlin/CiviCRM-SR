@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -139,7 +139,7 @@ SELECT id
         if ( $fmaGroupId ) {
             //get domain from email address and name as default value.
             require_once 'CRM/Core/BAO/Domain.php';
-            $domain =& CRM_Core_BAO_Domain::getDomain( );
+            $domain = CRM_Core_BAO_Domain::getDomain( );
             $domain->selectAdd( );
             $domain->selectAdd( 'email_name', 'email_address' );
             $domain->find(true);

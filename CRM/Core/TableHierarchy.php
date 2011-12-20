@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -51,7 +51,6 @@ class CRM_Core_TableHierarchy {
                          'civicrm_email'                => '13',
                          'civicrm_phone'                => '14',
                          'civicrm_im'                   => '15',
-                         'civicrm_im_provider'          => '16',
                          'civicrm_openid'               => '17',
                          'civicrm_location_type'        => '18',
                          'civicrm_group_contact'        => '19',

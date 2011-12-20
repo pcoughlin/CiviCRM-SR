@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -150,7 +150,7 @@ END AS 'relType'
 
             $memType = CRM_Core_DAO::getFieldValue("CRM_Member_DAO_Membership",$id,"membership_type_id");
             
-            $groupTree =& CRM_Core_BAO_CustomGroup::getTree( 'Membership',$this, $id,0,$memType);
+            $groupTree = CRM_Core_BAO_CustomGroup::getTree( 'Membership',$this, $id,0,$memType);
 			CRM_Core_BAO_CustomGroup::buildCustomDataView( $this, $groupTree );
             
             $isRecur = CRM_Core_DAO::getFieldValue( 'CRM_Member_DAO_Membership' , $id, 'contribution_recur_id' );

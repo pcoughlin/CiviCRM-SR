@@ -50,6 +50,15 @@
      <icon>admin/small/07.png</icon>
      <weight>420</weight>
   </item>
+  <item>
+     <path>civicrm/admin/setting/preferences/mailing</path>
+     <title>CiviMail Component Settings</title>
+     <page_callback>CRM_Admin_Form_Preferences_Mailing</page_callback>
+     <desc>Configure global CiviMail behaviors.</desc>
+     <access_arguments>access CiviMail,administer CiviCRM</access_arguments>
+     <adminGroup>CiviMail</adminGroup>
+     <weight>430</weight>
+  </item>
     <item>
      <path>civicrm/mailing/send</path>
      <title>New Mailing</title>
@@ -185,7 +194,7 @@
      <path>civicrm/mailing/view</path>
      <title>View Mailing</title>
      <page_callback>CRM_Mailing_Page_View</page_callback>
-     <access_arguments>view public CiviMail content</access_arguments>
+     <access_arguments>view public CiviMail content;access CiviMail;approve mailings</access_arguments>
      <is_public>true</is_public>
      <weight>800</weight>
   </item>

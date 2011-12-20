@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -124,7 +124,7 @@ class CRM_Contribute_BAO_ManagePremiums extends CRM_Contribute_DAO_Product
 
 	// set currency for CRM-1496
 	if ( ! isset( $premium->currency ) ) {
-	  $config =& CRM_Core_Config::singleton( );
+	  $config = CRM_Core_Config::singleton( );
 	  $premium->currency = $config->defaultCurrency;
 	}
 	

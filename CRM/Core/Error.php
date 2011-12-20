@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -325,7 +325,7 @@ class CRM_Core_Error extends PEAR_ErrorStack {
      * @static
      */
     static function debug( $name, $variable = null, $log = true, $html = true ) {
-        $error =& self::singleton( );
+        $error = self::singleton( );
 
         if ( $variable === null ) {
             $variable = $name;
@@ -450,7 +450,7 @@ class CRM_Core_Error extends PEAR_ErrorStack {
         $file_log->close( );
 
         if ($config->userFrameworkLogging) {
-            if ($config->userFramework == 'Drupal' and function_exists('watchdog')) {
+            if ($config->userSystem->is_drupal and function_exists('watchdog')) {
                 watchdog('civicrm', $message, NULL, WATCHDOG_DEBUG);
             }
         }
@@ -479,7 +479,7 @@ class CRM_Core_Error extends PEAR_ErrorStack {
     }
 
     static function createError( $message, $code = 8000, $level = 'Fatal', $params = null ) {
-        $error =& CRM_Core_Error::singleton( );
+        $error = CRM_Core_Error::singleton( );
         $error->push( $code, $level, array( $params ), $message );
         return $error;
     }
@@ -509,7 +509,7 @@ class CRM_Core_Error extends PEAR_ErrorStack {
      */
     public static function reset( ) 
     {
-        $error =& self::singleton( );
+        $error = self::singleton( );
         $error->_errors = array( ) ;
         $error->_errorsByLevel = array( ) ;
     }
@@ -542,7 +542,7 @@ class CRM_Core_Error extends PEAR_ErrorStack {
      * @static
      */
     public static function nullHandler( $obj ) {
-        CRM_Core_Error::debug_var( 'Ignoring exception thrown here', $obj );
+        CRM_Core_Error::debug_log_message( "Ignoring exception thrown by nullHandler: {$obj->code}, {$obj->message}" );
         CRM_Core_Error::backtrace( 'backTrace', true );
         return $obj;
     }
@@ -602,6 +602,16 @@ class CRM_Core_Error extends PEAR_ErrorStack {
         require_once 'CRM/Core/Transaction.php';
         CRM_Core_Transaction::forceRollbackIfEnabled( );
         CRM_Utils_System::civiExit( $code );
+    }
+
+    public static function isAPIError($error, $type = CRM_Core_Error::FATAL_ERROR) {
+        if ( is_array( $error ) && CRM_Utils_Array::value( 'is_error', $error ) ) {
+            $code = $error['error_message']['code'];
+            if ($code == $type) {
+                return true ;
+            }
+        }
+        return false;        
     }
 }
 

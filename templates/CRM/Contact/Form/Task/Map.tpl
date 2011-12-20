@@ -1,6 +1,6 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -24,12 +24,7 @@
  +--------------------------------------------------------------------+
 *}
 <div class='spacer'></div>
-{if $mapProvider eq 'Google'}
-  
-  {include file="CRM/Contact/Form/Task/Map/Google.tpl"}
-{elseif $mapProvider eq 'Yahoo'}
-  {include file="CRM/Contact/Form/Task/Map/Yahoo.tpl"}
-{/if}
+{include file="CRM/Contact/Form/Task/Map/`$mapProvider`.tpl"}
 
 <p></p>
 <div class="crm-submit-buttons">{include file="CRM/common/formButtons.tpl" location="bottom"}</div>                            

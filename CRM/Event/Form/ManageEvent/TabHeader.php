@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -42,7 +42,7 @@ class CRM_Event_Form_ManageEvent_TabHeader {
     static function build( &$form ) {
         $tabs = $form->get( 'tabHeader' );
         if ( !$tabs || !CRM_Utils_Array::value('reset', $_GET) ) {
-            $tabs =& self::process( $form );
+            $tabs = self::process( $form );
             $form->set( 'tabHeader', $tabs );
         }
         $form->assign_by_ref( 'tabHeader', $tabs );
@@ -56,7 +56,7 @@ class CRM_Event_Form_ManageEvent_TabHeader {
         }
 
         $tabs = array(
-                      'eventInfo'    => array( 'title'  => ts( 'Info and Settings' ),
+                      'settings'     => array( 'title'  => ts( 'Info and Settings' ),
                                                'link'   => null,
                                                'valid'  => false,
                                                'active' => false,
@@ -80,25 +80,60 @@ class CRM_Event_Form_ManageEvent_TabHeader {
                                                'active' => false,
                                                'current' => false,
                                                ),
+                      'reminder'     => array( 'title' => ts( 'Schedule Reminders' ),
+                                               'link'   => null,
+                                               'valid' => false,
+                                               'active' => false,
+                                               'current' => false,
+                                               ),
+                      'conference' => array( 'title' => ts( 'Conference Slots' ),
+                                               'link'   => null,
+                                               'valid' => false,
+                                               'active' => false,
+                                               'current' => false,
+                                               ),
                       'friend'       => array( 'title' => ts( 'Tell a Friend' ),
                                                'link'   => null,
                                                'valid' => false,
                                                'active' => false,
                                                'current' => false,
                                                ),
+                      'pcp'         => array( 'title' => ts( 'Personal Campaigns' ),
+                                              'link'   => null,
+                                              'valid' => false,
+                                              'active' => false,
+                                              'current' => false,
+                                            )
                       );
+
+        // check if we're in shopping cart mode for events
+        require_once 'CRM/Core/BAO/Setting.php';
+        $enableCart = CRM_Core_BAO_Setting::getItem( CRM_Core_BAO_Setting::EVENT_PREFERENCES_NAME,
+                                                      'enable_cart' );
+
+        if ( !$enableCart ) {
+            unset( $tabs['conference'] ); 
+        }        
 
         $eventID = $form->getVar( '_id' );
 
         $fullName  = $form->getVar( '_name' );      
         $className = CRM_Utils_String::getClassName( $fullName );
-        $class = strtolower($className) ;
-        // hack for tell a friend, since class name is different
-        if ( $className == 'Event' ) {
-            $class = 'friend';
-        } elseif ( $className == 'EventInfo' ){
-            $class = 'eventInfo';
-        }        
+        $new = '';
+        // hack for special cases.
+        switch( $className ) {
+            case 'Event':
+                $attributes = $form->getVar( '_attributes' );
+                $class = strtolower(basename( CRM_Utils_Array::value('action', $attributes) ));
+                break;
+            case 'ScheduleReminders':
+                $class = 'reminder';
+                $new = CRM_Utils_Array::value('new', $_GET) ? '&new=1' : '';
+                break;
+            default:
+                $class = strtolower($className);
+                break;
+        }
 
         if ( array_key_exists( $class, $tabs ) ) {
             $tabs[$class]['current'] = true;
@@ -113,7 +148,7 @@ class CRM_Event_Form_ManageEvent_TabHeader {
             
             foreach ( $tabs as $key => $value ) {
                 $tabs[$key]['link'] = CRM_Utils_System::url( "civicrm/event/manage/{$key}",
-                                                             "{$reset}action=update&snippet=4&id={$eventID}&qfKey={$qfKey}" );
+                                                             "{$reset}action=update&snippet=4&id={$eventID}&qfKey={$qfKey}&component=event{$new}" );
                 $tabs[$key]['active'] = $tabs[$key]['valid'] = true;
             }
             
@@ -141,13 +176,16 @@ WHERE      e.id = %1
             if ( ! $dao->is_active ) {
                 $tabs['friend']['valid'] = false;
             }
-        }
 
+            //calculate if the reminder has been configured for this event
+            
+        }
         return $tabs;
+
     }
 
     static function reset( &$form ) {
-        $tabs =& self::process( $form );
+        $tabs = self::process( $form );
         $form->set( 'tabHeader', $tabs );
     }
 
@@ -167,8 +205,7 @@ WHERE      e.id = %1
             }
         }
         
-        $current = $current ? $current : 'eventInfo';
+        $current = $current ? $current : 'settings';
         return $current;
-
     }
 }

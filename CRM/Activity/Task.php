@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -96,7 +96,15 @@ class CRM_Activity_Task
                                                                  'CRM_Activity_Form_Task_Email' ),
                                               'result' => false ),
                                   );
-            
+
+            require_once 'CRM/Core/Config.php';
+            $config = CRM_Core_Config::singleton( );
+            if (  in_array( 'CiviCase', $config->enableComponents ) ) {
+                self::$_tasks[6] = array( 'title'  => ts( 'File on Case' ),
+                                          'class'  => 'CRM_Activity_Form_Task_FileOnCase',
+                                          'result' => false );
+            }
+
             //CRM-4418, check for delete 
             if ( !CRM_Core_Permission::check( 'delete activities' ) ) {
                 unset( self::$_tasks[1] );

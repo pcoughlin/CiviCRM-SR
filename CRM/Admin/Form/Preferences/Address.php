@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -42,14 +42,43 @@ require_once 'CRM/Admin/Form/Preferences.php';
 class CRM_Admin_Form_Preferences_Address extends CRM_Admin_Form_Preferences
 {
     function preProcess( ) {
-        parent::preProcess( );
 
         CRM_Utils_System::setTitle(ts('Settings - Addresses'));
 
-        // add all the checkboxes
-        $this->_cbs = array(
-                            'address_options'    => ts( 'Address Fields'   ),
-                            );
+        require_once 'CRM/Core/BAO/Setting.php';
+
+        $this->_varNames =
+            array( CRM_Core_BAO_Setting::SYSTEM_PREFERENCES_NAME => 
+                   array( 
+                         'address_options' => array( 'html_type' => 'checkboxes',
+                                                     'title' => ts( 'Address Fields' ),
+                                                     'weight' => 1 ),
+                         'address_format'  => array( 'html_type' => 'textarea',
+                                                     'title' => ts( 'Display Format' ),
+                                                     'description' => null,
+                                                     'weight' => 2 ),
+                         'mailing_format'  => array( 'html_type' => 'textarea',
+                                                     'title' => ts( 'Mailing Label Format' ),
+                                                     'description' => null,
+                                                     'weight' => 3 ),
+                          ),
+                   
+                   CRM_Core_BAO_Setting::ADDRESS_STANDARDIZATION_PREFERENCES_NAME =>
+                   array(
+                         'address_standardization_provider' => array( 'html_type' => null,
+                                                                      'weight' => 4 ),
+                         'address_standardization_userid' => array( 'html_type' => 'text',
+                                                                    'title' => ts( 'User ID' ),
+                                                                    'description' => null,
+                                                                    'weight' => 5 ),
+                         'address_standardization_url' => array( 'html_type' => 'text',
+                                                                 'title' => ts( 'Web Service URL' ),
+                                                                 'description' => null,
+                                                                 'weight' => 6 ),
+                         ),
+                   );
+
+        parent::preProcess( );
     }
 
     function setDefaultValues( ) {
@@ -101,14 +130,13 @@ class CRM_Admin_Form_Preferences_Address extends CRM_Admin_Form_Preferences
     public function buildQuickForm( ) 
     {
         $this->applyFilter('__ALL__', 'trim');
-        // address formatting options
-        $this->addElement('textarea','mailing_format', ts('Mailing Label Format'));  
-        $this->addElement('textarea','address_format', ts('Display Format'));  
 
-        // Address Standarization
-        $this->addElement('text', 'address_standardization_provider', ts('Provider'));
-        $this->addElement('text', 'address_standardization_userid'  , ts('User ID'));
-        $this->addElement('text', 'address_standardization_url'     , ts('Web Service URL'));
+        // Address Standardization
+        $addrProviders = CRM_Core_SelectValues::addressProvider();
+        $this->addElement('select',
+                          'address_standardization_provider',
+                          ts('Address Provider'),
+                          array('' => '- select -') + $addrProviders);
 
         $this->addFormRule( array( 'CRM_Admin_Form_Preferences_Address', 'formRule' ) );
 
@@ -151,17 +179,6 @@ class CRM_Admin_Form_Preferences_Address extends CRM_Admin_Form_Preferences
 
         $this->_params = $this->controller->exportValues( $this->_name );
 
-        // trim the format and unify line endings to LF
-        $format = array( 'address_format', 'mailing_format' );
-        foreach ( $format as $f ) {
-          if ( ! empty( $this->_params[$f] ) ) {
-            $this->_params[$f] = trim( $this->_params[$f] );
-            $this->_params[$f] = str_replace(array("\r\n", "\r"), "\n", $this->_params[$f] );
-          }
-        }
-
-        
-        $this->_config->copyValues( $this->_params );
 
         // check if county option has been set
         $options = CRM_Core_OptionGroup::values( 'address_options', false, false, true );
@@ -191,7 +208,7 @@ FROM   civicrm_county
             }
         }
 
-        parent::postProcess( );
+        $this->postProcessCommon( );
     } //end of function
 
 }

@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -33,7 +33,7 @@
  * @subpackage API_Location
  *
  * @copyright CiviCRM LLC (c) 2004-2011
- * @version $Id: Location.php 33384 2011-03-25 13:45:30Z shot $
+ * @version $Id: Location.php 37506 2011-11-16 13:31:27Z kurund $
  */
 
 /**
@@ -701,7 +701,7 @@ function _civicrm_format_params_v2_to_v3( &$params, $locationTypeId = null ) {
         $locationTypeId = CRM_Utils_Array::value( 'location_type_id', $params );
         if ( !$locationTypeId && array_key_exists('location_type', $params ) ) {
             require_once 'CRM/Core/PseudoConstant.php';
-            $locTypes =& CRM_Core_PseudoConstant::locationType( );
+            $locTypes = CRM_Core_PseudoConstant::locationType( );
             
             $locType = $params['location_type'];
             if ( is_array( $params['location_type'] ) ) {
@@ -786,7 +786,7 @@ function _civicrm_format_params_v2_to_v3( &$params, $locationTypeId = null ) {
         if ( array_key_exists( $id, $params ) ) {
             if ( !$addressTaken ) {
                 require_once 'CRM/Core/DAO/Address.php';
-                $fields =& CRM_Core_DAO_Address::fields( );
+                $fields = CRM_Core_DAO_Address::fields( );
                 _civicrm_store_values( $fields, $params, $params['address'][$addressCount] );
                 $addressTaken = true;
             }

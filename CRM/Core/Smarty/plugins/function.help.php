@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -75,17 +75,10 @@ function smarty_function_help( $params, &$smarty ) {
     if ( ! $help ) {
         $help = $smarty->fetch( $file );
     }
-     if(CRM_Core_BAO_Preferences::variableGet("Screen_Reader"))
-   {
-    return <<< EOT
-<a href="#" class="helpiconanchor"> Help </a><div class="helpicon">&nbsp;<span id="{$id}_help" style="display:none">$help</span></div>&nbsp;&nbsp;&nbsp;
-EOT;
-  }else{
     return <<< EOT
 <script type="text/javascript"> cj( function() { cj(".helpicon").toolTip(); });</script>
 <div class="helpicon">&nbsp;<span id="{$id}_help" style="display:none">$help</span></div>&nbsp;&nbsp;&nbsp;
 EOT;
- }
 }
 
 

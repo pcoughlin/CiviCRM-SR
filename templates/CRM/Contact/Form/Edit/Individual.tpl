@@ -1,6 +1,6 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -38,7 +38,7 @@ var checkSimilar =  {$checkSimilar};
      }
 
      if (!isNaN(cid) || ! checkSimilar)
-       return;//no dupe check if this is a modif or if checkSimilar is disabled (CIVICRM_CONTACT_AJAX_CHECK_SIMILAR in civicrm_setting)
+       return;//no dupe check if this is a modif or if checkSimilar is disabled (contact_ajax_check_similar in civicrm_setting table)
 
 	     cj('#last_name').blur(function () {
          cj('#lastname_msg').remove();
@@ -54,7 +54,7 @@ var checkSimilar =  {$checkSimilar};
              msg = msg + "{/literal}{ts}There is a contact with a similar last name. If the person you were trying to add is listed below, click on their name to view or edit their record{/ts}{literal}";  
            } else {
              // ideally, should use a merge with data.length
-             msg = msg + "{/literal}{ts}There are "+data.length+" contacts with a similar last name({/ts}<a href='#' onclick='cj(\"#lastname_msg\").remove();cj(\"#current_employer\").focus();'>{ts}Click here{/ts}</a> {ts}to Skip and move to next form field). If the person you were trying to add is listed below, click on their name to view or edit their record{/ts}{literal}";
+             msg = msg + "{/literal}{ts}There are contacts with a similar last name. If the person you were trying to add is listed below, click on their name to view or edit their record{/ts}{literal}";
            }
            msg = msg+ '<table class="matching-contacts-actions">';
            cj.each(data, function(i,contact){
@@ -62,7 +62,7 @@ var checkSimilar =  {$checkSimilar};
 	     if ( !(contact.email) ) {
 	       contact.email = '';
 	     }
-             msg = msg + '<tr><td><a href="'+viewIndividual+contact.contact_id+'" target="_blank">'+ contact.display_name +'</a></td><td>'+contact.email+'</td><td class="action-items"><a class="action-item action-item-first" href="'+viewIndividual+contact.contact_id+'">{/literal}{ts}View{/ts}{literal}</a><a class="action-item" href="'+editIndividual+contact.contact_id+'">{/literal}{ts}Edit{/ts}{literal}</a></td></tr>';
+             msg = msg + '<tr><td><a href="'+viewIndividual+contact.contact_id+'">'+ contact.display_name +'</a></td><td>'+contact.email+'</td><td class="action-items"><a class="action-item action-item-first" href="'+viewIndividual+contact.contact_id+'">{/literal}{ts}View{/ts}{literal}</a><a class="action-item" href="'+editIndividual+contact.contact_id+'">{/literal}{ts}Edit{/ts}{literal}</a></td></tr>';
 	   }
            });
            msg = msg+ '</table>';
@@ -117,9 +117,9 @@ var checkSimilar =  {$checkSimilar};
             {$form.nick_name.html|crmReplace:class:big}
         </td>
         <td>
-            {if $buildContactSubType}&nbsp;
-               {$form.contact_sub_type.label}<br />
-               {$form.contact_sub_type.html}
+            {if $buildContactSubType}
+              {$form.contact_sub_type.label}<br />
+              {$form.contact_sub_type.html}
             {/if}
         </td>
     </tr>
@@ -128,7 +128,6 @@ var checkSimilar =  {$checkSimilar};
 <script type="text/javascript">
 var dataUrl        = "{/literal}{$employerDataURL}{literal}";
 var newContactText = "{/literal}({ts}new contact record{/ts}){literal}";
-cj('#current_employer').attr("title","Current employer auto complete");
 cj('#current_employer').autocomplete( dataUrl, { 
                                       width        : 250, 
                                       selectFirst  : false,

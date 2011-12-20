@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -70,9 +70,10 @@ AND    TABLE_NAME LIKE 'civicrm_%'
             $this->tables[] = $dao->TABLE_NAME;
         }
 
-        // do not log temp import and cache tables
+        // do not log temp import, cache and log tables
         $this->tables = preg_grep('/^civicrm_import_job_/',       $this->tables, PREG_GREP_INVERT);
         $this->tables = preg_grep('/_cache$/',                    $this->tables, PREG_GREP_INVERT);
+        $this->tables = preg_grep('/_log/',                    $this->tables, PREG_GREP_INVERT);
         $this->tables = preg_grep('/^civicrm_task_action_temp_/', $this->tables, PREG_GREP_INVERT);
         $this->tables = preg_grep('/^civicrm_export_temp_/',      $this->tables, PREG_GREP_INVERT);
 

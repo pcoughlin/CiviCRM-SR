@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -164,7 +164,7 @@ class CRM_Utils_Pager extends Pager_Sliding {
         $params['spacesBeforeSeparator'] = 1;
         $params['spacesAfterSeparator']  = 1;
         $params['extraVars']             = array( 'force' => 1 );
-        $params['excludeVars']           = array( 'reset', 'snippet' );
+        $params['excludeVars']           = array( 'reset', 'snippet', 'section' );
 
         // set previous and next text labels
         $params['prevImg']    = ' ' . ts('&lt; Previous');

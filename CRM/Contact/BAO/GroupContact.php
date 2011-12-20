@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -134,7 +134,8 @@ class CRM_Contact_BAO_GroupContact extends CRM_Contact_DAO_GroupContact {
      * @access public
      * @static
      */
-    static function addContactsToGroup( &$contactIds, $groupId,
+    static function addContactsToGroup( &$contactIds,
+                                        $groupId,
                                         $method = 'Admin',
                                         $status = 'Added',
                                         $tracking = null)  {
@@ -143,50 +144,13 @@ class CRM_Contact_BAO_GroupContact extends CRM_Contact_DAO_GroupContact {
         
         CRM_Utils_Hook::pre( 'create', 'GroupContact', $groupId, $contactIds ); 
         
-        $date = date('YmdHis');
-        $numContactsAdded    = 0;
-        $numContactsNotAdded = 0;
-       
-        foreach ( $contactIds as $contactId ) {
-            
-            $groupContact = new CRM_Contact_DAO_GroupContact( );
-            $groupContact->group_id   = $groupId;
-            $groupContact->contact_id = $contactId;
-            // check if the selected contact id already a member
-            // if not a member add to groupContact else keep the count of contacts that are not added
-            if (  ! $groupContact->find( true )) {
-                // add the contact to group
-                $historyParams = array(
-                    'contact_id' => $contactId, 
-                    'group_id' => $groupId, 
-                    'method' => $method,
-                    'status' => $status,
-                    'date' => $date,
-                    'tracking' => $tracking,
-                );
-                CRM_Contact_BAO_SubscriptionHistory::create($historyParams);
-                $groupContact->status    = $status;
-                $groupContact->save( );
-                $numContactsAdded++;
-            } else {
-                if ($groupContact->status == $status) {
-                    $numContactsNotAdded++;
-                } else {
-                    $historyParams = array(
-                        'contact_id' => $contactId, 
-                        'group_id' => $groupId, 
-                        'method' => $method,
-                        'status' => $status,
-                        'date' => $date,
-                        'tracking' => $tracking,
-                    );
-                    CRM_Contact_BAO_SubscriptionHistory::create($historyParams);
-                    $groupContact->status    = $status;
-                    $groupContact->save( );
-                    $numContactsAdded++;
-                }
-            }
-        }
+        list( $numContactsAdded,
+              $numContactsNotAdded ) = 
+            self::bulkAddContactsToGroup( $contactIds,
+                                          $groupId,
+                                          $method,
+                                          $status,
+                                          $tracking );
 
         // also reset the acl cache
         $config = CRM_Core_Config::singleton( );
@@ -216,7 +180,11 @@ class CRM_Contact_BAO_GroupContact extends CRM_Contact_DAO_GroupContact {
      * @access public
      * @static
      */
-    static function removeContactsFromGroup( &$contactIds, $groupId ,$method = 'Admin',$status = 'Removed',$tracking = null) {
+    static function removeContactsFromGroup( &$contactIds,
+                                             $groupId,
+                                             $method = 'Admin',
+                                             $status = 'Removed',
+                                             $tracking = null) {
         if ( ! is_array( $contactIds ) ) {
             return array( 0, 0, 0 );
         }
@@ -241,6 +209,18 @@ class CRM_Contact_BAO_GroupContact extends CRM_Contact_DAO_GroupContact {
         $group->find(true);
         
         foreach ( $contactIds as $contactId ) {
+          if( $status=='Deleted') {
+            $query = "DELETE FROM civicrm_group_contact WHERE contact_id=$contactId AND group_id=$groupId";
+            $dao = CRM_Core_DAO::executeQuery( $query );
+            $historyParams = array( 'group_id' => $groupId,
+                                    'contact_id' => $contactId,
+                                    'status' => $status,
+                                    'method' => $method,
+                                    'date' => $date,
+                                    'tracking' => $tracking);
+            CRM_Contact_BAO_SubscriptionHistory::create($historyParams);
+          }
+          else {
             $groupContact = new CRM_Contact_DAO_GroupContact( );
             $groupContact->group_id   = $groupId;
             $groupContact->contact_id = $contactId;
@@ -264,6 +244,7 @@ class CRM_Contact_BAO_GroupContact extends CRM_Contact_DAO_GroupContact {
             CRM_Contact_BAO_SubscriptionHistory::create($historyParams);
             $groupContact->status = $status;
             $groupContact->save( );
+          }
         }
         
         // also reset the acl cache
@@ -342,11 +323,13 @@ class CRM_Contact_BAO_GroupContact extends CRM_Contact_DAO_GroupContact {
      *
      * $access public
      */
-    static function &getContactGroup( $contactId, $status = null,
-                                      $numGroupContact = null,
-                                      $count = false,
+    static function &getContactGroup( $contactId,
+                                      $status           = null,
+                                      $numGroupContact  = null,
+                                      $count            = false,
                                       $ignorePermission = false,
-                                      $onlyPublicGroups = false ) {
+                                      $onlyPublicGroups = false,
+                                      $excludeHidden    = true ) {
         if ( $count ) {
             $select = 'SELECT count(DISTINCT civicrm_group_contact.id)';
         } else {
@@ -362,6 +345,10 @@ class CRM_Contact_BAO_GroupContact extends CRM_Contact_DAO_GroupContact {
         }
 
         $where  = " WHERE contact_a.id = %1 AND civicrm_group.is_active = 1 ";
+
+        if ( $excludeHidden ) {
+            $where .= " AND civicrm_group.is_hidden = 0 ";
+        }
 
         $params = array( 1 => array( $contactId, 'Integer' ) );
         if ( ! empty( $status ) ) {
@@ -402,7 +389,7 @@ class CRM_Contact_BAO_GroupContact extends CRM_Contact_DAO_GroupContact {
             $result = CRM_Core_DAO::singleValueQuery( $sql, $params ); 
             return $result;
         } else {
-            $dao =& CRM_Core_DAO::executeQuery( $sql, $params );
+            $dao = CRM_Core_DAO::executeQuery( $sql, $params );
             $values = array( );
             while ( $dao->fetch() ) {
                 $id                            = $dao->civicrm_group_contact_id;
@@ -425,7 +412,7 @@ class CRM_Contact_BAO_GroupContact extends CRM_Contact_DAO_GroupContact {
                 $values[$id][$prefix . 'method']          = $dao->method; 
                 if ( $status == 'Removed' ) {
                     $query = "SELECT `date` as `date_added` FROM civicrm_subscription_history WHERE id = (SELECT max(id) FROM civicrm_subscription_history WHERE contact_id = %1 AND status = \"Added\" AND group_id = $dao->group_id )";
-                    $dateDAO =& CRM_Core_DAO::executeQuery( $query, $params );
+                    $dateDAO = CRM_Core_DAO::executeQuery( $query, $params );
                     if ($dateDAO->fetch() ) {
                         $values[$id]['date_added']          = $dateDAO->date_added; 
                     }
@@ -561,7 +548,7 @@ AND civicrm_subscription_history.method ='Email' "  ;
 
         $params = array( 1 => array( $contactId, 'Integer' ),
                          2 => array( $groupID  , 'Integer' ) );
-        $dao =& CRM_Core_DAO::executeQuery( $query, $params );
+        $dao = CRM_Core_DAO::executeQuery( $query, $params );
         $dao->fetch( );
         return $dao;
     }
@@ -594,7 +581,7 @@ AND civicrm_group_contact.group_id = %2";
         $params = array( 1 => array( $contactId, 'Integer' ),
                          2 => array( $groupID  , 'Integer' ) );
       
-        $dao =& CRM_Core_DAO::executeQuery( $query, $params );
+        $dao = CRM_Core_DAO::executeQuery( $query, $params );
 
         $params = array('contact_id' => $contactId,
                         'group_id'  => $groupID,
@@ -661,7 +648,7 @@ AND civicrm_group_contact.group_id = %2";
          }
 
         // get the list of all the groups
-        $allGroup =& CRM_Contact_BAO_GroupContact::getGroupList( 0, $visibility );
+        $allGroup = CRM_Contact_BAO_GroupContact::getGroupList( 0, $visibility );
         
         // this fix is done to prevent warning generated by array_key_exits incase of empty array is given as input
         if (!is_array($params)) {
@@ -705,6 +692,202 @@ AND civicrm_group_contact.group_id = %2";
         return false;
     }
 
+    /**
+     * Function merges the groups from otherContactID to mainContactID
+     * along with subscription history
+     *
+     * @param int $mainContactId    contact id of main contact record.
+     * @param int $dontCare         something the protocol sends, which we ignore for now
+     * @param int $otherContactId   contact id of record which is going to merge.
+     *
+     * @return void.
+     * @static
+     */  
+    static function mergeGroupContact( $mainContactId, $dontCare, $otherContactId ) {
+        $params = array( 1 => array( $mainContactId , 'Integer' ),
+                         2 => array( $otherContactId, 'Integer' ) );
+
+        // find all groups that are in otherContactID but not in mainContactID, copy them over
+        $sql = "
+SELECT    cOther.group_id
+FROM      civicrm_group_contact cOther
+LEFT JOIN civicrm_group_contact cMain ON cOther.group_id = cMain.group_id AND cMain.contact_id = %1
+WHERE     cOther.contact_id = %2
+AND       cMain.contact_id IS NULL
+";
+        $dao = CRM_Core_DAO::executeQuery( $sql, $params );
+
+        $otherGroupIDs = array( );
+        while ( $dao->fetch( ) ) {
+            $otherGroupIDs[] = $dao->group_id;
+        }
+
+        if ( ! empty( $otherGroupIDs ) ) {
+            $otherGroupIDString = implode( ',', $otherGroupIDs );
+
+            $sql = "
+UPDATE    civicrm_group_contact
+SET       contact_id = %1
+WHERE     contact_id = %2
+AND       group_id IN ( $otherGroupIDString )
+";
+            CRM_Core_DAO::executeQuery( $sql, $params );
+
+            $sql = "
+UPDATE    civicrm_subscription_history
+SET       contact_id = %1
+WHERE     contact_id = %2
+AND       group_id IN ( $otherGroupIDString )
+";
+            CRM_Core_DAO::executeQuery( $sql, $params );
+        }
+
+        $sql = "
+SELECT     cOther.group_id as group_id,
+           cOther.status   as group_status
+FROM       civicrm_group_contact cMain
+INNER JOIN civicrm_group_contact cOther ON cMain.group_id = cOther.group_id
+WHERE      cMain.contact_id = %1
+AND        cOther.contact_id = %2
+";
+        $dao = CRM_Core_DAO::executeQuery( $sql, $params );
+
+        $groupIDs = array( );
+        while ( $dao->fetch( ) ) {
+            // only copy it over if it has added status and migrate the history
+            if ( $dao->group_status == 'Added' ) {
+                $groupIDs[] = $dao->group_id;
+            }
+        }
+
+        if ( ! empty( $groupIDs ) ) {
+            $groupIDString = implode( ',', $groupIDs );
+
+            $sql = "
+UPDATE    civicrm_group_contact
+SET       status = 'Added'
+WHERE     contact_id = %1
+AND       group_id IN ( $groupIDString )
+";
+            CRM_Core_DAO::executeQuery( $sql, $params );
+
+            $sql = "
+UPDATE    civicrm_subscription_history
+SET       contact_id = %1
+WHERE     contact_id = %2
+AND       group_id IN ( $groupIDString )
+";
+            CRM_Core_DAO::executeQuery( $sql, $params );
+        }
+        
+        // delete all the other group contacts
+        $sql = "
+DELETE 
+FROM   civicrm_group_contact 
+WHERE  contact_id = %2
+";
+        CRM_Core_DAO::executeQuery( $sql, $params );
+        
+        $sql = "
+DELETE 
+FROM   civicrm_subscription_history
+WHERE  contact_id = %2
+";
+        CRM_Core_DAO::executeQuery( $sql, $params );
+    }
+
+    /**
+     * Function merges the groups from otherContactID to mainContactID
+     * along with subscription history
+     *
+     * @param int $mainContactId    contact id of main contact record.
+     * @param int $dontCare         something the protocol sends, which we ignore for now
+     * @param int $otherContactId   contact id of record which is going to merge.
+     *
+     * @return void.
+     * @static
+     */  
+    static function ignoreMergeSubscriptionHistory( $mainContactId, $dontCare, $otherContactId ) {
+        // this is handled by merge group contacts
+        return;
+    }
+
+    /**
+     * Given an array of contact ids, add all the contacts to the group 
+     *
+     * @param array  $contactIds (reference ) the array of contact ids to be added
+     * @param int    $groupId    the id of the group
+     *
+     * @return array             (total, added, notAdded) count of contacts added to group
+     * @access public
+     * @static
+     */
+    static function bulkAddContactsToGroup( $contactIDs,
+                                            $groupID,
+                                            $method = 'Admin',
+                                            $status = 'Added',
+                                            $tracking = null)  {
+
+        $numContactsAdded    = 0;
+        $numContactsNotAdded = 0;
+
+        $contactGroupSQL = "
+REPLACE INTO civicrm_group_contact ( group_id, contact_id, status )
+VALUES
+";
+        $subscriptioHistorySQL = "
+INSERT INTO civicrm_subscription_history( group_id, contact_id, date, method, status, tracking )
+VALUES
+";
+        
+        $date = date('YmdHis');
+
+        // to avoid long strings, lets do BULK_INSERT_HIGH_COUNT values at a time 
+        while ( ! empty( $contactIDs ) ) {
+            $input = array_splice( $contactIDs, 0, CRM_Core_DAO::BULK_INSERT_HIGH_COUNT );
+            $contactStr   = implode( ',', $input );
+
+            // lets check their current status
+            $sql = "
+SELECT GROUP_CONCAT(contact_id) as contactStr
+FROM   civicrm_group_contact
+WHERE  group_id = %1
+AND    status = %2
+AND    contact_id IN ( $contactStr )
+";
+            $params = array( 1 => array( $groupID, 'Integer' ),
+                             2 => array( $status , 'String' ) );
+
+            $presentIDs = array( );
+            $dao = CRM_Core_DAO::executeQuery( $sql, $params );
+            if ( $dao->fetch( ) ) {
+                $presentIDs = explode( ',', $dao->contactStr );
+                $presentIDs = array_flip( $presentIDs );
+            }
+
+            $gcValues = $shValues = array( );
+            foreach ( $input as $cid ) {
+                if ( isset( $presentIDs[$cid] ) ) {
+                    $numContactsNotAdded++;
+                    continue;
+                }
+
+                $gcValues[] = "( $groupID, $cid, '$status' )";
+                $shValues[] = "( $groupID, $cid, '$date', '$method', '$status', '$tracking' )";
+                $numContactsAdded++;
+            }
+
+            if ( ! empty( $gcValues ) ) {
+                $cgSQL = $contactGroupSQL . implode( ",\n", $gcValues );
+                CRM_Core_DAO::executeQuery( $cgSQL );
+                
+                $shSQL = $subscriptioHistorySQL . implode( ",\n", $shValues );
+                CRM_Core_DAO::executeQuery( $shSQL );
+            }
+        }
+
+        return array( $numContactsAdded, $numContactsNotAdded );
+    }
 }
 
 

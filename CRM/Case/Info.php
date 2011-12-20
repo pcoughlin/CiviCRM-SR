@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -62,7 +62,8 @@ class CRM_Case_Info extends CRM_Core_Component_Info
         return array( 'delete in CiviCase',
                       'administer CiviCase', 
                       'access my cases and activities',
-                      'access all cases and activities' );
+                      'access all cases and activities',
+                      'add cases' );
     }
     
     // docs inherited from interface
@@ -94,8 +95,8 @@ class CRM_Case_Info extends CRM_Core_Component_Info
     
     // add shortcut to Create New
     public function creatNewShortcut( &$shortCuts ) {
-        if ( CRM_Core_Permission::check('access all cases and activities') &&
-             CRM_Core_Permission::check('add contacts') ) {
+        if ( CRM_Core_Permission::check('access all cases and activities') ||
+             CRM_Core_Permission::check('add cases') ) {
             require_once 'CRM/Core/OptionGroup.php';
             $atype = CRM_Core_OptionGroup::getValue('activity_type', 
                                                     'Open Case', 

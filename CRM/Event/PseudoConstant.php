@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -89,6 +89,13 @@ class CRM_Event_PseudoConstant extends CRM_Core_PseudoConstant
      */
     private static $eventTemplates;
 
+    /**
+     * Personal campaign pages
+     * @var array
+     * @static
+     */
+    private static $pcPage;
+    
     /**
      * Get all the n events
      *
@@ -272,5 +279,25 @@ class CRM_Event_PseudoConstant extends CRM_Core_PseudoConstant
     {
         self::$$name = null;
     }
-}
+    
+    /**
+     * Get all the Personal campaign pages
+     *
+     * @access public
+     * @return array - array reference of all pcp if any
+     * @static
+     */
+    public static function &pcPage($id = null)
+    {
+        if ( ! self::$pcPage ) {
+            CRM_Core_PseudoConstant::populate( self::$pcPage,
+                                               'CRM_PCP_DAO_PCP',
+                                               false, 'title' );
+        }
+        if ( $id ) {
+            return CRM_Utils_Array::value( $id, self::$pcPage );
+        }
+        return self::$pcPage;
+    }
 
+}

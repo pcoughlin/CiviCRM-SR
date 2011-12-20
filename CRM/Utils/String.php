@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -451,7 +451,7 @@ class CRM_Utils_String {
      */
     static function addJqueryFiles( &$html ) {
         $smarty = CRM_Core_Smarty::singleton( );
-        return $smarty->fetch( 'CRM/common/jquery.tpl' ) . $html . '<script type="text/javascript">jQuery.noConflict(true);</script>';
+        return $smarty->fetch( 'CRM/common/jquery.tpl' ) . $html;
     }
 
     /**

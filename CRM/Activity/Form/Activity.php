@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -37,7 +37,6 @@
 require_once "CRM/Core/Form.php";
 require_once "CRM/Core/BAO/CustomGroup.php";
 require_once 'CRM/Core/BAO/File.php';
-require_once 'CRM/Core/BAO/Preferences.php';
 require_once "CRM/Contact/Form/Task.php";
 require_once "CRM/Activity/BAO/Activity.php";
 require_once "CRM/Custom/Form/CustomData.php";
@@ -174,31 +173,13 @@ class CRM_Activity_Form_Activity extends CRM_Contact_Form_Task
                                                          'attributes' => array( '' => '- '.ts('select activity').' -' ) +
                                                          CRM_Core_PseudoConstant::ActivityType( false ),
                                                          ),
-                  'interval'                  =>  array( 'type'       => 'text',
-                                                         'label'      => 'in',
-                                                         'attributes' => 
-                                                         array( 'size'=> 4,'maxlength' => 8 ),
-                                                         ),
-                  'interval_unit'             =>  array( 'type'       => 'select',
-                                                         'label'      =>  null,
-                                                         'attributes' => 
-                                                         CRM_Core_OptionGroup::values( 'recur_frequency_units', 
-                                                                                       false, false, false, 
-                                                                                       null, 'name' ),
-                                                         ),
                   // Add optional 'Subject' field for the Follow-up Activiity, CRM-4491
                   'followup_activity_subject' =>  array( 'type'       => 'text',
                                                          'label'      => ts('Subject'),
                                                          'attributes' => CRM_Core_DAO::getAttribute( 'CRM_Activity_DAO_Activity', 
                                                                                                      'subject' ),
-                                                         ),
-                  
+                                                         )
                   );
-        
-        // append (s) for interval_unit attribute list
-        foreach ( $this->_fields['interval_unit']['attributes'] as $name => $label ) {
-            $this->_fields['interval_unit']['attributes'][$name] = $label . '(s)';
-        }
         
         if ( ( $this->_context == 'standalone' ) &&
              ( $printPDF = CRM_Utils_Array::key( 'Print PDF Letter', $this->_fields['followup_activity_type_id']['attributes'] ) ) ) {
@@ -574,7 +555,7 @@ class CRM_Activity_Form_Activity extends CRM_Contact_Form_Task
         }
         
         if ( $this->_action & ( CRM_Core_Action::DELETE | CRM_Core_Action::RENEW ) ) {
-            $this->assign( 'delName', $defaults['subject'] );
+            $this->assign( 'delName', CRM_Utils_Array::value( 'subject', $defaults ) );
         }
         
         if ( $this->_activityTypeFile ) {
@@ -725,11 +706,10 @@ class CRM_Activity_Form_Activity extends CRM_Contact_Form_Task
         
         $this->addRule('duration', 
                        ts('Please enter the duration as number of minutes (integers only).'), 'positiveInteger');  
-        
-        $this->addRule('interval', ts('Please enter the follow-up interval as a number (integers only).'), 
-                       'positiveInteger');
-
         $this->addDateTime( 'activity_date_time', ts('Date'), true, array( 'formatType' => 'activityDateTime') );  
+
+        //add followup date
+        $this->addDateTime( 'followup_date', ts('in') );  
         
         //autocomplete url
         $dataUrl = CRM_Utils_System::url( "civicrm/ajax/rest",
@@ -914,11 +894,11 @@ class CRM_Activity_Form_Activity extends CRM_Contact_Form_Task
             $errors['status_id'] = ts('You cannot record scheduled SMS activity.');
         }
         
-        if ( CRM_Utils_Array::value( 'followup_activity_type_id', $fields ) && !CRM_Utils_Array::value( 'interval', $fields ) ) {
-            $errors['interval'] = ts('Interval is a required field.');
+        if ( CRM_Utils_Array::value( 'followup_activity_type_id', $fields ) && !CRM_Utils_Array::value( 'followup_date', $fields ) ) {
+            $errors['followup_date_time'] = ts('Followup date is a required field.');
         }
-        //Activity type is mandatory if subject is specified for an Follow-up activity, CRM-4515
-        if ( CRM_Utils_Array::value( 'followup_activity_subject',$fields ) && 
+        //Activity type is mandatory if subject or follow-up date is specified for an Follow-up activity, CRM-4515
+        if ( ( CRM_Utils_Array::value( 'followup_activity_subject',$fields ) || CRM_Utils_Array::value( 'followup_date',$fields ) ) && 
              ! CRM_Utils_Array::value( 'followup_activity_type_id', $fields ) ) {
             $errors['followup_activity_subject'] = ts('Follow-up Activity type is a required field.');
         } 
@@ -1056,14 +1036,16 @@ class CRM_Activity_Form_Activity extends CRM_Contact_Form_Task
         $followupStatus = '';
         if ( CRM_Utils_Array::value('followup_activity_type_id', $params) ) {
             $followupActivity = CRM_Activity_BAO_Activity::createFollowupActivity( $activity->id, $params );
-            $followupStatus = "A followup activity has been scheduled.";
+            $followupStatus = ts('A followup activity has been scheduled.');
         }
 
         // send copy to assignee contacts.CRM-4509
         $mailStatus = '';
-        $config   =& CRM_Core_Config::singleton( );
-        
-        if ( !CRM_Utils_Array::crmIsEmptyArray($params['assignee_contact_id']) && $config->activityAssigneeNotification ) {
+        require_once 'CRM/Core/BAO/Setting.php';
+
+        if ( ! CRM_Utils_Array::crmIsEmptyArray($params['assignee_contact_id']) &&
+             CRM_Core_BAO_Setting::getItem( CRM_Core_BAO_Setting::SYSTEM_PREFERENCES_NAME,
+                                            'activity_assignee_notification' ) ) {
             $mailToContacts = array( );
             $assigneeContacts = CRM_Activity_BAO_ActivityAssignment::getAssigneeNames( $activity->id, true, false );
            
@@ -1076,7 +1058,7 @@ class CRM_Activity_Form_Activity extends CRM_Contact_Form_Task
             
             if ( !CRM_Utils_array::crmIsEmptyArray($mailToContacts) ) {
                 //include attachments while sendig a copy of activity.
-                $attachments =& CRM_Core_BAO_File::getEntityFile( 'civicrm_activity', $activity->id );
+                $attachments = CRM_Core_BAO_File::getEntityFile( 'civicrm_activity', $activity->id );
 
                 require_once "CRM/Case/BAO/Case.php";
                 // CRM-8400 add param with _currentlyViewedContactId for URL link in mail

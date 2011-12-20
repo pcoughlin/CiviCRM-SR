@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -188,7 +188,7 @@ class CRM_Event_Import_Form_Preview extends CRM_Core_Form
         
         // check if there is any error occured
         
-        $errorStack =& CRM_Core_Error::singleton();
+        $errorStack = CRM_Core_Error::singleton();
         $errors     = $errorStack->getErrors();
         $errorMessage = array();
        

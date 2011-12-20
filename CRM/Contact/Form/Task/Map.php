@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -152,13 +152,13 @@ class CRM_Contact_Form_Task_Map  extends CRM_Contact_Form_Task
             $imageUrlOnly = false;
             
             // google needs image url, CRM-6564
-            if ( $config->mapProvider == 'Google' ) {
+            if ( $config->mapProvider == 'Google' || $config->mapProvider == 'OpenStreetMaps' ) {
                 $imageUrlOnly = true;
             }
-            $locations =& CRM_Contact_BAO_Contact_Location::getMapInfo( $ids, $locationId, $imageUrlOnly );
+            $locations = CRM_Contact_BAO_Contact_Location::getMapInfo( $ids, $locationId, $imageUrlOnly );
         } else {
             require_once 'CRM/Event/BAO/Event.php';
-            $locations =& CRM_Event_BAO_Event::getMapInfo( $ids );
+            $locations = CRM_Event_BAO_Event::getMapInfo( $ids );
         }
 
         if ( empty( $locations ) ) {

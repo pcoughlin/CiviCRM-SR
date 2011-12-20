@@ -1,6 +1,6 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -153,6 +153,9 @@
 <div id="view-related-cases">
      <div id="related-cases-content"></div>
 </div>
+
+<div class="clear"></div>
+{include file="CRM/Case/Page/CustomDataView.tpl"}            
 
 <div class="crm-accordion-wrapper crm-accordion_title-accordion crm-accordion-closed crm-case-roles-block">
  <div class="crm-accordion-header">
@@ -664,6 +667,7 @@ function addRole() {
 </script>
 {/literal}
 {include file="CRM/Case/Form/ActivityToCase.tpl"}
+{include file="CRM/Case/Form/ActivityChangeStatus.tpl"}
 
 {* pane to display / edit regular tags or tagsets for cases *}
 {if $showTags OR $showTagsets }

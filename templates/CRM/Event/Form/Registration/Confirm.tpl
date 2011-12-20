@@ -1,6 +1,6 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -40,7 +40,7 @@
         </div>
     {else}
         <div id="help">
-        {ts}Please verify the information below. Click <strong>Go Back</strong> if you need to make changes.{/ts}
+        {ts}Please verify the information below. Click the <strong>Go Back</strong> button at the bottom of the page if you need to make changes.{/ts}
         {if $contributeMode EQ 'notify' and !$is_pay_later and ! $isAmountzero }
             {if $paymentProcessor.payment_processor_type EQ 'Google_Checkout'}
                 {ts 1=$paymentProcessor.processorName}Click the <strong>%1</strong> button to checkout to Google, where you will select your payment method and complete the registration.{/ts}
@@ -70,6 +70,32 @@
             {include file="CRM/Event/Form/Registration/EventInfoBlock.tpl"}
         </div>
     </div>
+    
+    {if $pcpBlock}
+    <div class="crm-group pcp_display-group">
+        <div class="header-dark">
+           {ts}Contribution Honor Roll{/ts}
+        </div>
+        <div class="display-block">
+            {if $pcp_display_in_roll}
+                {ts}List my contribution{/ts}
+                {if $pcp_is_anonymous}
+                    <strong>{ts}anonymously{/ts}.</strong>
+                {else}
+            {ts}under the name{/ts}: <strong>{$pcp_roll_nickname}</strong><br/>
+                    {if $pcp_personal_note}
+                        {ts}With the personal note{/ts}: <strong>{$pcp_personal_note}</strong>
+                    {else}
+                     <strong>{ts}With no personal note{/ts}</strong>
+                     {/if}
+                {/if}
+            {else}
+                {ts}Don't list my contribution in the honor roll.{/ts}
+            {/if}
+            <br />
+        </div>
+    </div>
+    {/if}
     
     {if $paidEvent} 
         <div class="crm-group event_fees-group">
@@ -210,7 +236,7 @@
     {if $contributeMode NEQ 'notify'} {* In 'notify mode, contributor is taken to processor payment forms next *}
     <div class="messages status section continue_message-section">
         <p>
-        {ts}Your registration will not be submitted until you click the <strong>Continue</strong> button. Please click the button one time only.{/ts}
+        {ts}Your registration will not be submitted until you click the <strong>Continue</strong> button. Please click the button one time only. If you need to change any details, click the Go Back button below to return to the previous screen.{/ts}
         </p>
     </div>
     {/if}    

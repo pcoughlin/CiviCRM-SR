@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -84,8 +84,7 @@ class CRM_Mailing_Form_Component extends CRM_Core_Form
                    CRM_Core_DAO::getAttribute( 'CRM_Mailing_DAO_Component', 'body_text' ),
                    true );
         $this->add('textarea', 'body_html', ts('Body - HTML Format'),
-                   CRM_Core_DAO::getAttribute( 'CRM_Mailing_DAO_Component', 'body_html' ),
-                   true );
+                   CRM_Core_DAO::getAttribute( 'CRM_Mailing_DAO_Component', 'body_html' ) );
         
         $this->add('checkbox', 'is_default', ts('Default?'));
         $this->add('checkbox', 'is_active' , ts('Enabled?'));

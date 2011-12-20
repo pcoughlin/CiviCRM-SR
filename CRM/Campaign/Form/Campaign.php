@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -94,9 +94,7 @@ class CRM_Campaign_Form_Campaign extends CRM_Core_Form
         
         $this->_context = CRM_Utils_Request::retrieve( 'context', 'String', $this );
         
-        if ( $this->_context ) {
-            $this->assign( 'context', $this->_context );
-        }
+        $this->assign( 'context', $this->_context );
         
         $this->_action     = CRM_Utils_Request::retrieve('action', 'String', $this );
         $this->_campaignId = CRM_Utils_Request::retrieve('id', 'Positive', $this );

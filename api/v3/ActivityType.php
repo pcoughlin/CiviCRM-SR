@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -44,7 +44,7 @@
 /**
  * Include common API util functions
  */   
-require_once 'api/v3/utils.php';
+require_once 'CRM/Core/OptionGroup.php';
 
 /**
  * Function to retrieve activity types
@@ -52,16 +52,12 @@ require_once 'api/v3/utils.php';
  * @return array $activityTypes activity types keyed by id
  * @access public
  *
- * @todo Erik Hommel 16 dec 2010 Check if get function returns all DB fields
- * @todo Erik Hommel 16 dec 2010 Check permission with utils function civicrm_api_permission_check
- * @todo - this just returns all - not a search
  * @example ActivityTypeGet.php
  * @deprecated - use constant_get
  */
 function civicrm_api3_activity_type_get($params ) {
 
-     civicrm_api3_verify_mandatory($params);
-    require_once 'CRM/Core/OptionGroup.php';
+
     $activityTypes = CRM_Core_OptionGroup::values( 'activity_type' );
     return civicrm_api3_create_success($activityTypes,$params,'activity_type','get');
 
@@ -78,15 +74,11 @@ function civicrm_api3_activity_type_get($params ) {
  *{@schema Activity/ActivityType.xml}
  *
  * {@example ActivityTypeCreate.php 0}
- * @todo Erik Hommel 16 dec 2010 Check permission with utils function civicrm_api_permission_check
- * @todo Erik Hommel 16 dec 2010 Check if function processes update according to standards
- * @ deprecated - we will introduce OptionValue Create - plse consider helping with this if not done
+ * @deprecated - we will introduce OptionValue Create - plse consider helping with this if not done
  */
  
 function civicrm_api3_activity_type_create( $params ) {
 
-    civicrm_api3_verify_mandatory($params,null,array('label','weight'));
-    require_once 'CRM/Core/OptionGroup.php';
    
     $action = 1;
     $groupParams = array ( 'name' => 'activity_type' );
@@ -102,7 +94,16 @@ function civicrm_api3_activity_type_create( $params ) {
     return civicrm_api3_create_success($activityType,$params,'activity_type','create');
 
 }
-
+/*
+ * Adjust Metadata for Create action
+ * 
+ * The metadata is used for setting defaults, documentation & validation
+ * @param array $params array or parameters determined by getfields
+ */
+function _civicrm_api3_activity_type_create_spec(&$params){
+  $params['label']['api.required'] =1;
+  $params['weight']['api.required'] =1;
+}
 /**
  * Function to delete activity type
  * @param activityTypeId int   activity type id to delete
@@ -110,8 +111,7 @@ function civicrm_api3_activity_type_create( $params ) {
  *
  * @access public
  *
- * @todo Erik Hommel 16 dec 2010 Check permission with utils function civicrm_api_permission_check
-  * @deprecated - we will introduce OptionValue Delete- plse consider helping with this if not done
+ * @deprecated - we will introduce OptionValue Delete- plse consider helping with this if not done
  * {@example ActivityTypeDelete.php 0}
  */
 function civicrm_api3_activity_type_delete( $params ) {

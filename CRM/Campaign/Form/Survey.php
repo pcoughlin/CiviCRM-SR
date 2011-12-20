@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -94,9 +94,7 @@ class CRM_Campaign_Form_Survey extends CRM_Core_Form
         
         $this->_context = CRM_Utils_Request::retrieve( 'context', 'String', $this );
         
-        if ( $this->_context ) {
-            $this->assign( 'context', $this->_context );
-        }
+        $this->assign( 'context', $this->_context );
         
         $this->_action   = CRM_Utils_Request::retrieve('action', 'String', $this );
         
@@ -281,7 +279,7 @@ class CRM_Campaign_Form_Survey extends CRM_Core_Form
         $defaultOption = array();
         $_showHide = new CRM_Core_ShowHideBlocks('','');
                     
-        $optionAttributes =& CRM_Core_DAO::getAttribute( 'CRM_Core_DAO_OptionValue' );
+        $optionAttributes = CRM_Core_DAO::getAttribute( 'CRM_Core_DAO_OptionValue' );
         $optionAttributes['label']['size'] = $optionAttributes['value']['size'] = 25;
 
         for($i = 1; $i <= self::NUM_OPTION; $i++) {

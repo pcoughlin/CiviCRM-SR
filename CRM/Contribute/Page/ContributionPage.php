@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -151,9 +151,9 @@ class CRM_Contribute_Page_ContributionPage extends CRM_Core_Page
                                                  CRM_Core_Action::EXPORT   => array( 
                                                                                     'name'  => ts('Thank-you and Receipting'),
                                                                                     'title' => ts('Thank-you and Receipting'),
-                                                                                    'url'   => $urlString.'thankYou',
+                                                                                    'url'   => $urlString.'thankyou',
                                                                                     'qs'    => $urlParams,
-                                                                                    'uniqueName' => 'thankYou'
+                                                                                    'uniqueName' => 'thankyou'
                                                                                      ),
                                                  CRM_Core_Action::BASIC    => array( 
                                                                                     'name'  => ts('Tell a Friend'),
@@ -573,9 +573,11 @@ ORDER BY title asc
          }
          
          if ( $sortBy &&
-              $this->_sortByCharacter ) {
-             $clauses[] = 'title LIKE %3';
-             $params[3] = array( $this->_sortByCharacter . '%', 'String' );
+              $this->_sortByCharacter !== null ) {
+             $clauses[] = 
+                 "title LIKE '" . 
+                 strtolower(CRM_Core_DAO::escapeWildCardString($this->_sortByCharacter)) .
+                 "%'";
          }
          
          $campainIds = $this->get( 'campaign_id' );

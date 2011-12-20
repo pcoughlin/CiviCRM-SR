@@ -1,6 +1,6 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -27,7 +27,7 @@
 {if $action eq 1 or $action eq 2 or $action eq 8}
    {include file="CRM/Admin/Form/Extensions.tpl"}
 {else}
-    {capture assign='adminURL'}{crmURL p='civicrm/admin/setting/path' q="reset=1&destination=/civicrm/admin/extensions?reset=1"}{/capture}
+    {capture assign='adminURL'}{crmURL p='civicrm/admin/setting/path' q="reset=1&civicrmDestination=/civicrm/admin/extensions?reset=1"}{/capture}
     {if !$extEnabled }
       <div class="crm-content-block crm-block">
         <div class="messages status">
@@ -44,7 +44,7 @@
 
       <div class="messages help">
         <p>{ts 1=$adminURL}CiviCRM extensions allow you to install additional features for your site. They can provide new functionality in three areas: Custom Searches, Report Templates and Payment Processors. In order to install an extension, you need to upload it manually to your <a href="%1">Extensions Directory</a>, reload this page and click Install. Once installed, extensions become available under the Custom Searches, Report Templates or Payment Processor Types administrative screens.{/ts}</p>
-        <strong>{ts 1="http://forum.civicrm.org"}Please note that extensions are in a testing period during the 3.3 release cycle. Get in touch with the CiviCRM core team on the <a href="%1">community forum</a> if you've developed an extension which you want to share with the community.{/ts}</strong>
+        <strong>{ts 1="http://forum.civicrm.org"}Please note that extensions are in a testing period during the 4.1 release cycle. Get in touch with the CiviCRM core team on the <a href="%1">community forum</a> if you've developed an extension which you want to share with the community.{/ts}</strong>
       </div>
 
       {include file="CRM/common/enableDisable.tpl"}

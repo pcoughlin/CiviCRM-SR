@@ -1,7 +1,7 @@
 <?php
 /*
 +--------------------------------------------------------------------+
-| CiviCRM version 4.0                                                |
+| CiviCRM version 4.1                                                |
 +--------------------------------------------------------------------+
 | Copyright CiviCRM LLC (c) 2004-2011                                |
 +--------------------------------------------------------------------+
@@ -38,8 +38,11 @@ class CRM_Core_I18n_SchemaStructure
         static $result = null;
         if (!$result) {
             $result = array(
+                'civicrm_location_type' => array(
+                    'display_name' => "varchar(64)",
+                ) ,
                 'civicrm_option_group' => array(
-                    'label' => "varchar(255)",
+                    'title' => "varchar(255)",
                     'description' => "varchar(255)",
                 ) ,
                 'civicrm_contact_type' => array(
@@ -114,10 +117,6 @@ class CRM_Core_I18n_SchemaStructure
                     'help_pre' => "text",
                     'help_post' => "text",
                 ) ,
-                'civicrm_price_field_value' => array(
-                    'label' => "varchar(255)",
-                    'description' => "text",
-                ) ,
                 'civicrm_uf_group' => array(
                     'title' => "varchar(64)",
                     'help_pre' => "text",
@@ -137,6 +136,10 @@ class CRM_Core_I18n_SchemaStructure
                     'new_text' => "text",
                     'renewal_title' => "varchar(255)",
                     'renewal_text' => "text",
+                ) ,
+                'civicrm_price_field_value' => array(
+                    'label' => "varchar(255)",
+                    'description' => "text",
                 ) ,
                 'civicrm_event' => array(
                     'title' => "varchar(255)",

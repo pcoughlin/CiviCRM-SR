@@ -1,6 +1,6 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -31,7 +31,7 @@
 <div id = "addressBlockId" class="crm-accordion-wrapper crm-address-accordion crm-accordion-closed">
  <div class="crm-accordion-header">
   <div class="icon crm-accordion-pointer"></div> 
-   <a href="#" class="whiteanchor">{$title}</a>
+	{$title}
  </div><!-- /.crm-accordion-header -->
  <div class="crm-accordion-body" id="addressBlock">
 {/if}
@@ -127,7 +127,7 @@
             }
             
             var addressHTML = '';
-            cj( ).crmAPI( 'location', 'get', { 'contact_id': sharedContactId }, {
+            cj( ).crmAPI( 'location', 'get', { 'contact_id': sharedContactId, 'version' : 2 }, {
                   success: function( response ) {
                       if ( response.address ) {
                           var selected = 'checked';

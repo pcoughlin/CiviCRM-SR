@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -166,7 +166,8 @@ WHERE  inst.report_id = %1";
         header('Content-Type: text/csv');
 
         //Force a download and name the file using the current timestamp.
-        header('Content-Disposition: attachment; filename=Report_' . $_SERVER['REQUEST_TIME'] . '.csv');
+        $datetime = date('Ymd-Gi', $_SERVER['REQUEST_TIME']);
+        header('Content-Disposition: attachment; filename=Report_' . $datetime . '.csv');
         echo self::makeCsv( $form, $rows );
         CRM_Utils_System::civiExit( );
     }
@@ -190,7 +191,7 @@ WHERE  inst.report_id = %1";
             }
         }
         // Add the headers.
-        $csv .= implode(',', $headers) . "\n";
+        $csv .= implode(',', $headers) . "\r\n";
 
         $displayRows = array();
         $value       = null;
@@ -219,7 +220,7 @@ WHERE  inst.report_id = %1";
                 }  
             }
             // Add the data row.
-            $csv .= implode(',', $displayRows) . "\n";
+            $csv .= implode(',', $displayRows) . "\r\n";
         }
 
         return $csv;
@@ -243,6 +244,7 @@ WHERE  inst.report_id = %1";
             CRM_Core_Session::setStatus( ts("Listed contact(s) have been added to the selected group."));
         } 
     }
+
     static function getInstanceID() {
 
         $config    = CRM_Core_Config::singleton( );
@@ -288,4 +290,84 @@ WHERE  inst.report_id = %1";
         
         return true;
     }
+    
+    /**
+     * Check if the user can view a report instance based on their role(s)
+     *
+     * @instanceId string $str the report instance to check
+     *
+     * @return boolean true if yes, else false
+     * @static
+     * @access public
+     */
+    static function isInstanceGroupRoleAllowed( $instanceId ) {
+        if ( ! $instanceId ) {
+            return true;
+        }
+
+        $instanceValues = array( );
+        $params         = array( 'id' => $instanceId );
+        CRM_Core_DAO::commonRetrieve( 'CRM_Report_DAO_Instance',
+                                      $params,
+                                      $instanceValues );
+        //transform grouprole to array
+        if ( !empty($instanceValues['grouprole']) ) {
+            $grouprole_array = explode( CRM_Core_DAO::VALUE_SEPARATOR,
+                                        $instanceValues['grouprole'] );
+			if ( !CRM_Core_Permission::checkGroupRole( $grouprole_array ) &&
+                 !CRM_Core_Permission::check( 'administer Reports' ) ) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    static function processReport( $params ) {
+        require_once 'CRM/Report/Page/Instance.php';
+        require_once 'CRM/Utils/Wrapper.php';
+
+        $sendmail     = CRM_Utils_Array::value( 'sendmail', $params, 1 );
+        $instanceId   = CRM_Utils_Array::value( 'instanceId', $params );
+        $resetVal     = CRM_Utils_Array::value( 'reset', $params, 1 );
+
+        // hack for now, CRM-8358
+        $_REQUEST['sendmail'] = $sendmail;
+        $_REQUEST['reset']    = $resetVal;
+
+        $optionVal    = self::getValueFromUrl( $instanceId );
+
+        $messages = array( );
+        $messages[] =  "Report Mail Triggered...";
+
+        require_once 'CRM/Core/OptionGroup.php';
+        $templateInfo = CRM_Core_OptionGroup::getRowValues( 'report_template', $optionVal, 'value' );
+        $obj = new CRM_Report_Page_Instance();
+        $is_error = 0;
+        if ( strstr($templateInfo['name'], '_Form') ) {
+            $instanceInfo = array( );
+            CRM_Report_BAO_Instance::retrieve( array('id' => $instanceId), $instanceInfo );
+            
+            if ( ! empty($instanceInfo['title']) ) {
+                $obj->assign( 'reportTitle', $instanceInfo['title'] );
+            } else {
+                $obj->assign( 'reportTitle', $templateInfo['label'] );
+            }
+            
+            $wrapper = new CRM_Utils_Wrapper( );
+            $arguments['urlToSession'] = array( array( 'urlVar'     => 'instanceId',
+                                                       'type'       => 'Positive',
+                                                       'sessionVar' => 'instanceId',
+                                                       'default'    => 'null' ) );
+            $messages[] = $wrapper->run( $templateInfo['name'], null, $arguments );
+        } else {
+            $messages[] = 'Did not find valid instance to execute';
+            $is_error = 1;
+        }
+
+        $result = array(
+                        'is_error' => $is_error,
+                        'messages' => implode( "\n", $messages ) );
+        return $result;
+    }
+
 }

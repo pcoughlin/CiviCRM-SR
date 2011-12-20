@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -149,7 +149,7 @@ class CRM_Admin_Page_Extensions extends CRM_Core_Page_Basic
     {
 
         $this->assign('extEnabled', FALSE );
-        if ( self::$_extensions ) {
+        if ( self::$_extensions !== null ) {
             $this->assign('extEnabled', TRUE );
         } else {
             return;

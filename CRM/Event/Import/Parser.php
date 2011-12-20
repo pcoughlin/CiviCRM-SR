@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -396,7 +396,7 @@ abstract class CRM_Event_Import_Parser
         if ($mode == self::MODE_PREVIEW || $mode == self::MODE_IMPORT) {
             $customHeaders = $mapper;
             
-            $customfields =& CRM_Core_BAO_CustomField::getFields('Participant');
+            $customfields = CRM_Core_BAO_CustomField::getFields('Participant');
             foreach ($customHeaders as $key => $value) {
                 if ($id = CRM_Core_BAO_CustomField::getKeyID($value)) {
                     $customHeaders[$key] = $customfields[$id][0];

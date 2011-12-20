@@ -1,7 +1,7 @@
 <?php
 /*
 +--------------------------------------------------------------------+
-| CiviCRM version 4.0                                                |
+| CiviCRM version 4.1                                                |
 +--------------------------------------------------------------------+
 | Copyright CiviCRM LLC (c) 2004-2011                                |
 +--------------------------------------------------------------------+
@@ -128,6 +128,12 @@ class CRM_Report_DAO_Instance extends CRM_Core_DAO
      * @var string
      */
     public $permission;
+    /**
+     * role required to be able to run this instance
+     *
+     * @var string
+     */
+    public $grouprole;
     /**
      * Submitted form values for this report
      *
@@ -265,6 +271,13 @@ class CRM_Report_DAO_Instance extends CRM_Core_DAO
                     'maxlength' => 255,
                     'size' => CRM_Utils_Type::HUGE,
                 ) ,
+                'grouprole' => array(
+                    'name' => 'grouprole',
+                    'type' => CRM_Utils_Type::T_STRING,
+                    'title' => ts('Grouprole') ,
+                    'maxlength' => 1024,
+                    'size' => CRM_Utils_Type::HUGE,
+                ) ,
                 'form_values' => array(
                     'name' => 'form_values',
                     'type' => CRM_Utils_Type::T_TEXT,
@@ -355,7 +368,7 @@ class CRM_Report_DAO_Instance extends CRM_Core_DAO
     {
         if (!(self::$_import)) {
             self::$_import = array();
-            $fields = & self::fields();
+            $fields = self::fields();
             foreach($fields as $name => $field) {
                 if (CRM_Utils_Array::value('import', $field)) {
                     if ($prefix) {
@@ -378,7 +391,7 @@ class CRM_Report_DAO_Instance extends CRM_Core_DAO
     {
         if (!(self::$_export)) {
             self::$_export = array();
-            $fields = & self::fields();
+            $fields = self::fields();
             foreach($fields as $name => $field) {
                 if (CRM_Utils_Array::value('export', $field)) {
                     if ($prefix) {

@@ -1,7 +1,7 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -51,7 +51,7 @@ function civicrm_init( ) {
 function plugin_init( ) {
     //invoke plugins.
     JPluginHelper::importPlugin( 'civicrm' );
-    $app =& JFactory::getApplication( );
+    $app = JFactory::getApplication( );
     $app->triggerEvent( 'onCiviLoad' ); 
 }
 

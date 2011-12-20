@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -49,11 +49,14 @@ class CRM_Admin_Form_Setting_Mapping extends CRM_Admin_Form_Setting
      * @access public
      */
     public function buildQuickForm( ) {
-        CRM_Utils_System::setTitle(ts('Settings - Mapping Provider'));
+        CRM_Utils_System::setTitle(ts('Settings - Mapping and Geocoding Providers'));
 
         $map = CRM_Core_SelectValues::mapProvider();
-        $this->addElement('select','mapProvider', ts('Map Provider'),array('' => '- select -') + $map);  
-        $this->add('text','mapAPIKey', ts('Provider Key'), null);  
+        $geo = CRM_Core_SelectValues::geoProvider();
+        $this->addElement('select','mapProvider', ts('Mapping Provider'),array('' => '- select -') + $map, array('onChange' => 'showHideMapAPIkey( this.value );'));  
+        $this->add('text','mapAPIKey', ts('Map Provider Key'), null);  
+        $this->addElement('select','geoProvider', ts('Geocoding Provider'),array('' => '- select -') + $geo, array('onChange' => 'showHideGeoAPIkey( this.value );'));  
+        $this->add('text','geoAPIKey', ts('Geo Provider Key'), null);  
     
         parent::buildQuickForm();
     }
@@ -63,7 +66,7 @@ class CRM_Admin_Form_Setting_Mapping extends CRM_Admin_Form_Setting
      * global form rule
      *
      * @param array $fields  the input form values
-
+     *
      * @return true if no errors, else array of errors
      * @access public
      * @static
@@ -75,8 +78,12 @@ class CRM_Admin_Form_Setting_Mapping extends CRM_Admin_Form_Setting
             $errors['_qf_default'] = ts( 'Mapping features require PHP version 5 or greater' );
         }
 
-        if ( !$fields['mapAPIKey'] && $fields['mapProvider'] != '' ) {
-            $errors['mapAPIKey'] = "API key is a required field";
+        if ( !$fields['mapAPIKey'] && ( $fields['mapProvider'] != '' && $fields['mapProvider'] == 'Yahoo' )) {
+            $errors['mapAPIKey'] = "Map Provider key is a required field.";
+        } 
+
+        if ( $fields['mapProvider'] == 'OpenStreetMaps' && $fields['geoProvider'] == '' ) {
+            $errors['geoProvider'] = "Please select a Geocoding Provider - Open Street Maps does not provide geocoding.";
         } 
 
         return $errors;

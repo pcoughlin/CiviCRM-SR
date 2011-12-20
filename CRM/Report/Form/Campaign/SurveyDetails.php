@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -291,6 +291,10 @@ class CRM_Report_Form_Campaign_SurveyDetails extends CRM_Report_Form {
                 implode( ' , ', array_keys(  $surveyActivityTypes ) ) . ' ) )';
         }
         
+        // always filter out deleted activities (so contacts that have been released
+        // don't show up in the report).
+        $clauses[] = "( {$this->_aliases['civicrm_activity']}.is_deleted = 0 )";
+
         if ( empty( $clauses ) ) {
             $this->_where = "WHERE ( 1 ) ";
         } else {
@@ -784,7 +788,7 @@ INNER JOIN  civicrm_custom_group cg ON ( cg.id = cf.custom_group_id )
              cf.option_group_id
        FROM  civicrm_custom_group cg 
 INNER  JOIN  civicrm_custom_field cf ON ( cg.id = cf.custom_group_id )
-      WHERE  cf.id IN ( '. implode( ' , ',  $responseFieldIds ).' )';   
+      WHERE  cf.id IN ( '. implode( ' , ',  $responseFieldIds ).' )  ORDER BY cf.weight';   
         $response = CRM_Core_DAO::executeQuery( $query );
         $fildCnt = 1;
         while ( $response->fetch( ) ) {

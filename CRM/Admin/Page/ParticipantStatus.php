@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -86,7 +86,7 @@ class CRM_Admin_Page_ParticipantStatus extends CRM_Core_Page_Basic
         $dao->orderBy('weight');
         $dao->find();
 
-        $visibilities =& CRM_Core_PseudoConstant::visibility();
+        $visibilities = CRM_Core_PseudoConstant::visibility();
 
         // these statuses are reserved, but disabled by default - so should be disablable after being enabled
         $disablable = array('On waitlist', 'Awaiting approval', 'Pending from waitlist', 'Pending from approval', 'Rejected');

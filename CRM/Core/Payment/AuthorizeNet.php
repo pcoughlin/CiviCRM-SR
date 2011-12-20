@@ -12,7 +12,7 @@
  *
  * @package CRM
  * @author Marshal Newrock <marshal@idealso.com>
- * $Id: AuthorizeNet.php 35155 2011-07-05 09:04:03Z deepak $
+ * $Id: AuthorizeNet.php 35731 2011-08-16 13:28:03Z rohan $
  */
 
 /* NOTE:
@@ -507,7 +507,7 @@ class CRM_Core_Payment_AuthorizeNet extends CRM_Core_Payment {
     }
 
     function &error( $errorCode = null, $errorMessage = null ) {
-        $e =& CRM_Core_Error::singleton( );
+        $e = CRM_Core_Error::singleton( );
         if ( $errorCode ) {
             $e->push( $errorCode, 0, null, $errorMessage );
         } else {

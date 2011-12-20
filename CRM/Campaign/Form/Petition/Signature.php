@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -159,6 +159,28 @@ class CRM_Campaign_Form_Petition_Signature extends CRM_Core_Form
 		$this->forceEmailConfirmed['email'] = ''; 
 	}
 	
+    function getContactID( ) {
+        $tempID = CRM_Utils_Request::retrieve( 'cid', 'Positive', $this );
+        
+        // force to ignore the authenticated user
+        if ( $tempID === '0' ) {
+            return $tempID;
+        }
+        
+        //check if this is a checksum authentication
+        $userChecksum = CRM_Utils_Request::retrieve( 'cs', 'String', $this );
+        if ( $userChecksum ) {
+            //check for anonymous user.
+            require_once 'CRM/Contact/BAO/Contact/Utils.php';
+            $validUser = CRM_Contact_BAO_Contact_Utils::validChecksum( $tempID, $userChecksum );
+            if ( $validUser ) return  $tempID;
+        }
+        
+        // check if the user is registered and we have a contact ID
+        $session = CRM_Core_Session::singleton( );
+        return $session->get( 'userID' ); 
+    }
+	
     public function preProcess()
     {
       $this->bao = new CRM_Campaign_BAO_Petition();
@@ -188,7 +210,7 @@ class CRM_Campaign_Form_Petition_Signature extends CRM_Core_Form
       $session = CRM_Core_Session::singleton( );   
     
 	    //get the contact id for this user if logged in
-      $this->_contactId =  $session->get( 'userID' );
+      $this->_contactId =  $this->getContactId();
       if (isset($this->_contactId)) {
 	        $this->_loggedIn = TRUE;
     	}
@@ -327,16 +349,20 @@ class CRM_Campaign_Form_Petition_Signature extends CRM_Core_Form
      */
     public function postProcess() 
     {		
+        require_once 'CRM/Core/BAO/Setting.php';
+        $tag_name = CRM_Core_BAO_Setting::getItem( CRM_Core_BAO_Setting::CAMPAIGN_PREFERENCES_NAME,
+                                                   'tag_unconfirmed' );
+
        
-		if (defined('CIVICRM_TAG_UNCONFIRMED')) {
+		if ( $tag_name ) {
 			// Check if contact 'email confirmed' tag exists, else create one
 			// This should be in the petition module initialise code to create a default tag for this
-			$tag_params['name'] = CIVICRM_TAG_UNCONFIRMED;
+			$tag_params['name'] = $tag_name;
 			$tag_params['version'] = 3;
 			$tag = civicrm_api('tag','get',$tag_params); 
 			if ($tag['count'] == 0) {				
 				//create tag
-				$tag_params['description'] = CIVICRM_TAG_UNCONFIRMED;
+				$tag_params['description'] = $tag_name;
 				$tag_params['is_reserved'] = 1;
 				$tag_params['used_for'] = 'civicrm_contact';
 				$tag = civicrm_api('tag', 'create', $tag_params); 
@@ -407,7 +433,7 @@ class CRM_Campaign_Form_Petition_Signature extends CRM_Core_Form
 				$this->redirectIfSigned($params);
 				
 				// dedupe matched single contact, check for 'unconfirmed' tag				
-				if (defined('CIVICRM_TAG_UNCONFIRMED')) {
+				if ( $tag_name ) {
 					require_once 'CRM/Core/DAO/EntityTag.php';
 					$tag = new CRM_Core_DAO_EntityTag( );
 					$tag->entity_id  = $this->_contactId;
@@ -433,7 +459,7 @@ class CRM_Campaign_Form_Petition_Signature extends CRM_Core_Form
 				
 				// check if user has already signed this petition - redirects to Thank You if true
 				$this->redirectIfSigned($params);
-				if (defined('CIVICRM_TAG_UNCONFIRMED')) {
+				if ( $tag_name ) {
 					require_once 'CRM/Core/DAO/EntityTag.php';
 					$tag = new CRM_Core_DAO_EntityTag( );
 					$tag->entity_id  = $this->_contactId;
@@ -502,7 +528,7 @@ class CRM_Campaign_Form_Petition_Signature extends CRM_Core_Form
 				
 				case self::EMAIL_CONFIRM:
 					// set 'Unconfirmed' tag for this new contact
-					if (defined('CIVICRM_TAG_UNCONFIRMED')) {
+					if ( $tag_name ) {
 						unset($tag_params);
 						$tag_params['contact_id'] = $this->_contactId;
 						$tag_params['tag_id'] = $this->_tagId;
@@ -583,7 +609,7 @@ class CRM_Campaign_Form_Petition_Signature extends CRM_Core_Form
                 if ( $addCaptcha &&
                      ! $viewOnly ) {
                     require_once 'CRM/Utils/ReCAPTCHA.php';
-                    $captcha =& CRM_Utils_ReCAPTCHA::singleton( );
+                    $captcha = CRM_Utils_ReCAPTCHA::singleton( );
                     $captcha->add( $this );
                     $this->assign( "isCaptcha" , true );
                 }                

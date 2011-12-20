@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -134,7 +134,7 @@ class CRM_Contact_Page_View_CustomData extends CRM_Core_Page {
             $controller->set('tableId'   , $this->_contactId );
             $controller->set('groupId'   , $this->_groupId);
             $controller->set('entityType', CRM_Contact_BAO_Contact::getContactType( $this->_contactId ) );
-            $controller->set('entitySubType', CRM_Contact_BAO_Contact::getContactSubType( $this->_contactId ) );
+            $controller->set('entitySubType', CRM_Contact_BAO_Contact::getContactSubType( $this->_contactId, ',' ) );
             $controller->process();
             $controller->run();
         }

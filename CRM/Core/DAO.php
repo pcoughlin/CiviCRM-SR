@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -58,7 +58,14 @@ class CRM_Core_DAO extends DB_DataObject
 
         VALUE_SEPARATOR = "",
 
-        BULK_INSERT_COUNT = 200;
+        BULK_INSERT_COUNT      = 200,
+
+        BULK_INSERT_HIGH_COUNT = 200,
+
+        // special value for mail bulk inserts to avoid
+        // potential duplication, assuming a smaller number reduces number of queries
+        // by some factor, so some tradeoff. CRM-8678
+        BULK_MAIL_INSERT_COUNT = 10;
 
     /**
      * the factory class for this application
@@ -126,6 +133,18 @@ class CRM_Core_DAO extends DB_DataObject
         $this->whereAdd ( );
         $this->selectAdd( );
         $this->joinAdd  ( );
+    }
+
+    static function getLocaleTableName( $tableName ) {
+        global $dbLocale;
+        if ( $dbLocale ) {
+            require_once 'CRM/Core/I18n/Schema.php';
+            $tables = CRM_Core_I18n_Schema::schemaStructureTables();
+            if ( in_array($tableName, $tables) ) {
+                return $tableName . $dbLocale;
+            }
+        }
+        return $tableName;
     }
 
     /**
@@ -283,6 +302,10 @@ class CRM_Core_DAO extends DB_DataObject
             $this->insert();
         }
         $this->free( );
+
+        require_once 'CRM/Utils/Hook.php';
+        CRM_Utils_Hook::postSave( $this );
+
         return $this;
     }
 
@@ -871,7 +894,10 @@ FROM   civicrm_domain
             require_once(str_replace('_', DIRECTORY_SEPARATOR, $daoName) . ".php");
             eval( '$dao   = new ' . $daoName . '( );' );
         }
-        $dao->query( $queryStr, $i18nRewrite );
+        $result = $dao->query( $queryStr, $i18nRewrite );
+        if ( is_a( $result, 'DB_Error' ) ) {
+            return $result;
+        }
 
         if ( $freeDAO ||
              preg_match( '/^(insert|update|delete|create|drop|replace)/i', $queryStr ) ) {
@@ -996,7 +1022,7 @@ FROM   civicrm_domain
      *                                        on which basis to copy
      * @param array  $newData                 array of all the fields & values 
      *                                        to be copied besides the other fields
-     * @param string $fieldsFix               array of fields that you want to prefix/suffix
+     * @param string $fieldsFix               array of fields that you want to prefix/suffix/replace
      * @param string $blockCopyOfDependencies fields that you want to block from
      *                                        getting copied
      * 
@@ -1097,7 +1123,7 @@ SELECT contact_id
  WHERE id IN ( $IDs )
 ";
 
-        $dao =& CRM_Core_DAO::executeQuery( $query );
+        $dao = CRM_Core_DAO::executeQuery( $query );
         while ( $dao->fetch( ) ) {
             $contactIDs[] = $dao->contact_id;
         }
@@ -1168,7 +1194,21 @@ SELECT contact_id
         if ( ! $_dao ) {
             $_dao = new CRM_Core_DAO( );
         }
+
         return $_dao->escape( $string );
+    }
+
+    static function escapeWildCardString( $string ) {
+        // CRM-9155
+        // ensure we escape the single characters % and _ which are mysql wild
+        // card characters and could come in via sortByCharacter
+        // note that mysql does not escape these characters
+        if ( $string && in_array( $string,
+                       array( '%', '_', '%%', '_%' ) ) ) {
+            return '\\' . $string;
+        }
+
+        return self::escapeString( $string );
     }
 
     //Creates a test object, including any required objects it needs via recursion
@@ -1324,7 +1364,7 @@ SELECT contact_id
         return $tableName;
    }
 
-    static function checkTriggerViewPermission( $view = true ) {
+    static function checkTriggerViewPermission( $view = true, $trigger = true ) {
         // test for create view and trigger permissions and if allowed, add the option to go multilingual
         // and logging
         CRM_Core_Error::ignoreException();
@@ -1337,25 +1377,27 @@ SELECT contact_id
             }
         }
 
-        $dao->query('CREATE TRIGGER civicrm_domain_trigger BEFORE INSERT ON civicrm_domain FOR EACH ROW BEGIN END');
-
-        if ( PEAR::getStaticProperty('DB_DataObject','lastError') ) {
-            CRM_Core_Error::setCallback();
-            if ( $view ) {
-                $dao->query('DROP VIEW IF EXISTS civicrm_domain_view');
-            }
-            return false;
+        if ( $trigger) {
+	        $dao->query('CREATE TRIGGER civicrm_domain_trigger BEFORE INSERT ON civicrm_domain FOR EACH ROW BEGIN END');
+	
+	        if ( PEAR::getStaticProperty('DB_DataObject','lastError') ) {
+	            CRM_Core_Error::setCallback();
+	            if ( $view ) {
+	                $dao->query('DROP VIEW IF EXISTS civicrm_domain_view');
+	            }
+	            return false;
+	        }
+	
+	        $dao->query('DROP TRIGGER IF EXISTS civicrm_domain_trigger');
+	        if ( PEAR::getStaticProperty('DB_DataObject','lastError') ) {
+	            CRM_Core_Error::setCallback();
+	            if ( $view ) {
+	                $dao->query('DROP VIEW IF EXISTS civicrm_domain_view');
+	            }
+	            return false;
+	        }
         }
-
-        $dao->query('DROP TRIGGER IF EXISTS civicrm_domain_trigger');
-        if ( PEAR::getStaticProperty('DB_DataObject','lastError') ) {
-            CRM_Core_Error::setCallback();
-            if ( $view ) {
-                $dao->query('DROP VIEW IF EXISTS civicrm_domain_view');
-            }
-            return false;
-        }
-
+        
         if ( $view ) {
             $dao->query('DROP VIEW IF EXISTS civicrm_domain_view');
             if ( PEAR::getStaticProperty('DB_DataObject','lastError') ) {

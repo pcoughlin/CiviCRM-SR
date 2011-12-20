@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -33,7 +33,7 @@
  * @subpackage API_Participant
  * 
  * @copyright CiviCRM LLC (c) 2004-2011
- * @version $Id: Participant.php 33007 2011-03-14 22:52:10Z kurund $
+ * @version $Id: Participant.php 37506 2011-11-16 13:31:27Z kurund $
  *
  */
 
@@ -182,7 +182,7 @@ function &civicrm_participant_search( &$params ) {
         $returnProperties = CRM_Event_BAO_Query::defaultReturnProperties( CRM_Contact_BAO_Query::MODE_EVENT );
     }
 
-    $newParams =& CRM_Contact_BAO_Query::convertFormValues( $params);
+    $newParams = CRM_Contact_BAO_Query::convertFormValues( $params);
     $query = new CRM_Contact_BAO_Query( $newParams, $returnProperties, null );
     list( $select, $from, $where, $having ) = $query->query( );
     
@@ -192,7 +192,7 @@ function &civicrm_participant_search( &$params ) {
         $sql .= " ORDER BY $sort ";
     }
     $sql .= " LIMIT $offset, $rowCount ";
-    $dao =& CRM_Core_DAO::executeQuery( $sql, CRM_Core_DAO::$_nullArray );
+    $dao = CRM_Core_DAO::executeQuery( $sql, CRM_Core_DAO::$_nullArray );
     
     $participant = array( );
     while ( $dao->fetch( ) ) {

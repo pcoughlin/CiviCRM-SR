@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -235,7 +235,7 @@ class CRM_Group_Page_Group extends CRM_Core_Page_Basic
         $this->_sortByCharacter = CRM_Utils_Request::retrieve( 'sortByCharacter',
                                                                'String',
                                                                $this );
-        if ( $this->_sortByCharacter == 1 ||
+        if ( strtolower( $this->_sortByCharacter ) == 'all' || 
              ! empty( $_POST ) ) {
             $this->_sortByCharacter = '';
             $this->set( 'sortByCharacter', '' );
@@ -259,8 +259,8 @@ class CRM_Group_Page_Group extends CRM_Core_Page_Basic
         
         list( $offset, $rowCount ) = $this->_pager->getOffsetAndRowCount( );
         $select = $from = $where = "";
-        if ( defined( 'CIVICRM_MULTISITE' ) && CIVICRM_MULTISITE && 
-             CRM_Core_Permission::check( 'administer Multiple Organizations' ) ) {
+        if ( CRM_Core_Permission::check( 'administer Multiple Organizations' ) &&
+             CRM_Core_Permission::isMultisiteEnabled( ) ) {
             $select = ", contact.display_name as orgName, contact.id as orgID";
             $from   = " LEFT JOIN civicrm_group_organization gOrg
                                ON gOrg.group_id = groups.id 
@@ -337,7 +337,7 @@ class CRM_Group_Page_Group extends CRM_Core_Page_Basic
                                            substr( $values[$object->id]['group_type'], 1, -1 ) );
                     $types = array( );
                     foreach ( $groupTypes as $type ) {
-                        $types[] = $allTypes[$type];
+                        $types[] = CRM_Utils_Array::value( $type, $allTypes );
                     }
                     $values[$object->id]['group_type'] = implode( ', ', $types );
                 }
@@ -426,9 +426,11 @@ class CRM_Group_Page_Group extends CRM_Core_Page_Basic
         }
         
         if ( $sortBy &&
-             $this->_sortByCharacter ) {
-            $clauses[] = 'groups.title LIKE %6';
-            $params[6] = array( $this->_sortByCharacter . '%', 'String' );
+             $this->_sortByCharacter !== null ) {
+            $clauses[] = 
+                "groups.title LIKE '" . 
+                strtolower(CRM_Core_DAO::escapeWildCardString($this->_sortByCharacter)) .
+                "%'";
         }
 
         // dont do a the below assignement when doing a 

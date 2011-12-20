@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -126,10 +126,13 @@ class CRM_Utils_PagerAToZ
         $path = CRM_Utils_System::currentPath() ;
 
         $qfKey = CRM_Utils_Array::value( 'qfKey', $query->_formValues );
-
+        if ( empty($qfKey) ) {
+            $qfKey = CRM_Utils_Request::retrieve('qfKey', 'String', $this, false, null, $_REQUEST );
+        }
+        
         $aToZBar = array( );
         foreach ( $AToZBar as $key => $link ) {
-            if ( ! $link ) {
+            if ( $link === null ) {
                 continue;
             }
 
@@ -143,7 +146,7 @@ class CRM_Utils_PagerAToZ
                 $url = CRM_Utils_System::url( $path, "force=1&qfKey=$qfKey&sortByCharacter=" );
                 // we do it this way since we want the url to be encoded but not the link character
                 // since that seems to mess up drupal utf-8 encoding etc
-                $url .= $link;
+                $url .= urlencode( $link );
                 $element['item']  = sprintf('<a href="%s" %s>%s</a>',
                                             $url,
                                             $klass,
@@ -155,7 +158,7 @@ class CRM_Utils_PagerAToZ
         }
         
         $url = sprintf('<a href="%s">%s</a>',
-                       CRM_Utils_System::url( $path, "force=1&qfKey=$qfKey&sortByCharacter=1" ),
+                       CRM_Utils_System::url( $path, "force=1&qfKey=$qfKey&sortByCharacter=all" ),
                        'All' );
         $aToZBar[] = array( 'item' => $url );
         return $aToZBar;

@@ -1,6 +1,6 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -77,6 +77,10 @@
         <tr class="crm-report-instanceForm-form-block-permission">
             <td class="report-label" width="20%">{$form.permission.label} {help id="id-report_perms" file="CRM/Report/Form/Settings.hlp"}</td>
             <td>{$form.permission.html|crmReplace:class:huge}</td>
+        </tr>
+        <tr class="crm-report-instanceForm-form-block-role">
+            <td class="report-label" width="20%">{$form.grouprole.label}</td>
+            <td>{$form.grouprole.html|crmReplace:class:huge}</td>
         </tr>
     {/if}
     <tr class="crm-report-instanceForm-form-block-addToDashboard">

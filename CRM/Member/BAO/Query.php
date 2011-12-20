@@ -2,7 +2,7 @@
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.0                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -40,7 +40,7 @@ class CRM_Member_BAO_Query
     static function &getFields( ) 
     {
         require_once 'CRM/Member/BAO/Membership.php';
-        $fields =& CRM_Member_BAO_Membership::exportableFields( );
+        $fields = CRM_Member_BAO_Membership::exportableFields( );
         return $fields;
     }
     
@@ -132,6 +132,9 @@ class CRM_Member_BAO_Query
         $isTest   = false;
         $grouping = null;
         foreach ( array_keys( $query->_params ) as $id ) {
+            if ( !CRM_Utils_Array::value(0, $query->_params[$id]) ) {
+                continue;
+            }
             if ( substr( $query->_params[$id][0], 0, 7 ) == 'member_' ) {
                 if ( $query->_mode == CRM_Contact_BAO_QUERY::MODE_CONTACTS ) {
                     $query->_useDistinct = true;
