@@ -136,4 +136,43 @@ AND    v.is_active = 1
             }
         }
     }
+        static function variableLoad($userID = null)
+    {
+    	if($userID == null){
+    	 $object = self::userObject( $userID );
+    	 $userID = $object->contact_id;
+    	}
+    	
+    	/* 
+    	 * To store the data in Serialized format
+     	 * 
+    	$data = array("Screen_Reader"=>1,"anotherparam"=>"myvalue");
+    	$sql = "update civicrm_preferences set variables='".serialize($data)."' where contact_id=".$userID;
+    	$dao    = CRM_Core_DAO::executeQuery( $sql );
+    	  */
+        //echo $userID; exit;  	
+     if($userID != ""){  
+      	$sql = "select variables from civicrm_preferences where contact_id=".$userID;
+      	$dao    = CRM_Core_DAO::executeQuery( $sql );
+      	$dao->fetch();
+  
+      	if(is_object($dao))
+      	{
+      		$config =& CRM_Core_Config::singleton( );
+      		$config->variables[$userID] = unserialize($dao->variables);
+      	}
+    	}
+    	
+    }
+    static function variableGet($varName, $userID = null)
+    {
+    	if($userID == null){
+    	 $object = self::userObject( $userID );
+    	 $userID = $object->contact_id;
+    	}
+    	
+    	$config =& CRM_Core_Config::singleton( );
+    	return $config->variables[$userID][$varName];
+    }
+
 }
