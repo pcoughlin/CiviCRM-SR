@@ -226,7 +226,7 @@ class CRM_Core_BAO_Cache extends CRM_Core_DAO_Cache
         // clean up all sessions older than $cacheTimeIntervalDays days
         $cacheTimeIntervalDays  = 2;
 
-        if ( mt_rand( 1, 100000 ) % 1396 == 0 ) {
+        if ( mt_rand( 1, 100000 ) % $cacheCleanUpNumber == 0 ) {
 
             // delete all PrevNext caches
             require_once 'CRM/Core/BAO/PrevNextCache.php';
@@ -247,7 +247,8 @@ SELECT TABLE_NAME as tableName
 FROM   INFORMATION_SCHEMA.TABLES
 WHERE  TABLE_SCHEMA = %1 
 AND    ( TABLE_NAME LIKE 'civicrm_task_action_temp_%' 
- OR      TABLE_NAME LIKE 'civicrm_export_temp_%' )
+ OR      TABLE_NAME LIKE 'civicrm_export_temp_%'
+ OR      TABLE_NAME LIKE 'civicrm_import_job_%' )
 AND    CREATE_TIME < date_sub( NOW( ), INTERVAL $cacheTimeIntervalDays day )
 ";
 

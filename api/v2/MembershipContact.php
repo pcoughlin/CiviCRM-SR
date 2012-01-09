@@ -34,7 +34,7 @@
  * @subpackage API_Membership
  *  
  * @copyright CiviCRM LLC (c) 2004-2011
- * @version $Id: MembershipContact.php 37506 2011-11-16 13:31:27Z kurund $
+ * @version $Id: MembershipContact.php 37986 2011-12-19 17:51:59Z kurund $
  */
 
 /**
@@ -274,6 +274,7 @@ function _civicrm_membership_format_params( &$params, &$values, $create=false)
         case 'join_date':
         case 'start_date':
         case 'end_date':    
+        case 'reminder_date':
         case 'membership_start_date':
         case 'membership_end_date':
             if (!CRM_Utils_Rule::date($value)) {

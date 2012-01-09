@@ -74,6 +74,10 @@ class CRM_Admin_Form_ScheduleReminders extends CRM_Admin_Form
         } elseif ( $this->_action & (CRM_Core_Action::UPDATE ) ) { 
             $this->_mappingID = CRM_Core_DAO::getFieldValue( 'CRM_Core_DAO_ActionSchedule', 
                                                              $this->_id, 'mapping_id' );
+            $this->_context = CRM_Utils_Request::retrieve( 'context', 'String', $this ); 
+            if ( $this->_context == 'event') {
+                $this->_eventId = CRM_Utils_Request::retrieve( 'eventId', 'Integer', $this );
+            }
         }
         
         if ( !empty($_POST) && CRM_Utils_Array::value('entity', $_POST) ) {
@@ -223,12 +227,6 @@ class CRM_Admin_Form_ScheduleReminders extends CRM_Admin_Form
             $errors['subject'] = ts('Subject is a required field.');
         }
         
-        $listingOptions = CRM_Core_BAO_ActionSchedule::getRecipientListing($fields['entity'][0], CRM_Utils_Array::value('recipient', $fields));
-        $listingOptionsSelected = CRM_Utils_Array::value( 'recipient_listing', $fields );
-        if ( !empty($listingOptions) && empty($listingOptionsSelected) ) {
-            $errors['recipient_listing'] = ts('Recipient Listing is a required field.');
-        }
-
         if ( !CRM_Utils_System::isNull( $fields['absolute_date'] ) ) {
             if (CRM_Utils_Date::format( CRM_Utils_Date::processDate( $fields['absolute_date'], null ) ) < CRM_Utils_Date::format(date('YmdHi00')) ) {
                 $errors['absolute_date'] = ts('Absolute date cannot be earlier than the current time.');
@@ -429,6 +427,13 @@ class CRM_Admin_Form_ScheduleReminders extends CRM_Admin_Form
         if ( $this->_action & CRM_Core_Action::UPDATE ) { 
             $status = ts( "Your Reminder titled %1 has been updated." , 
                           array( 1 => "<strong>{$values['title']}</strong>") );
+            
+            if ( $this->_context == 'event' && $this->_eventId ) {
+                $url = CRM_Utils_System::url( 'civicrm/event/manage/reminder', 
+                                              "reset=1&action=update&id={$this->_eventId}" );
+                $session = CRM_Core_Session::singleton( ); 
+                $session->pushUserContext( $url );
+            }
         }
         CRM_Core_Session::setStatus( $status );
 

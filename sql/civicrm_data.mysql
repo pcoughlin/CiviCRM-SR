@@ -4484,8 +4484,6 @@ VALUES
    ('campaign_type'                 , 'Campaign Type'                      , 1, 1),
    ('campaign_status'               , 'Campaign Status'                    , 1, 1),
    ('system_extensions'             , 'CiviCRM Extensions'                 , 1, 1),
-   ('directory_preferences'         , 'Directory Preferences'              , 1, 1),
-   ('url_preferences'               , 'URL Preferences'                    , 1, 1),
    ('mail_approval_status'          , 'CiviMail Approval Status'           , 1, 1),
    ('engagement_index'              , 'Engagement Index'                   , 1, 1),
    ('cg_extend_objects'             , 'Objects a custom group extends to'  , 1, 1),
@@ -4550,8 +4548,6 @@ SELECT @option_group_id_notePrivacy    := max(id) from civicrm_option_group wher
 SELECT @option_group_id_campaignType   := max(id) from civicrm_option_group where name = 'campaign_type';
 SELECT @option_group_id_campaignStatus := max(id) from civicrm_option_group where name = 'campaign_status';
 SELECT @option_group_id_extensions     := max(id) from civicrm_option_group where name = 'system_extensions';
-SELECT @option_group_id_directory_pref := max(id) from civicrm_option_group where name = 'directory_preferences';
-SELECT @option_group_id_url_pref       := max(id) from civicrm_option_group where name = 'url_preferences';
 SELECT @option_group_id_mail_approval_status := max(id) from civicrm_option_group where name = 'mail_approval_status';
 SELECT @option_group_id_engagement_index := max(id) from civicrm_option_group where name = 'engagement_index';
 SELECT @option_group_id_cgeo           := max(id) from civicrm_option_group where name = 'cg_extend_objects';
@@ -5097,19 +5093,6 @@ VALUES
   (@option_group_id_grantTyp, 'Family Support'     , 2, 'Family Support'    , NULL, 0, NULL, 2, NULL, 0, 0, 1, NULL, @domainID, NULL),
   (@option_group_id_grantTyp, 'General Protection' , 3, 'General Protection', NULL, 0, NULL, 3, NULL, 0, 0, 1, NULL, @domainID, NULL),
   (@option_group_id_grantTyp, 'Impunity'           , 4, 'Impunity'          , NULL, 0, NULL, 4, NULL, 0, 0, 1, NULL, @domainID, NULL),
-
--- Directory preferences
-  (@option_group_id_directory_pref, 'Temporary Files' , '', 'uploadDir', NULL, 0, 0, 1, 'File system path where temporary CiviCRM files - such as import data files - are uploaded.', 0, 1, 1, NULL, @domainID, NULL),
-  (@option_group_id_directory_pref, 'Images' , '', 'imageUploadDir', NULL, 0, 0, 2, 'File system path where image files are uploaded. Currently, this path is used for images associated with premiums (CiviContribute thank-you gifts).', 0, 1, 1, NULL, @domainID, NULL),
-  (@option_group_id_directory_pref, 'Custom Files' , '', 'customFileUploadDir', NULL, 0, 0, 3, 'Path where documents and images which are attachments to contact records are stored (e.g. contact photos, resumes, contracts, etc.). These attachments are defined using \'file\' type custom fields.', 0, 1, 1, NULL, @domainID, NULL),
-  (@option_group_id_directory_pref, 'Custom Templates' , '', 'customTemplateDir', NULL, 0, 0, 4, 'Path where site specific templates are stored if any. This directory is searched first if set. CiviCase configuration files can also be stored in this custom path.', 0, 1, 1, NULL, @domainID, NULL),
-  (@option_group_id_directory_pref, 'Custom PHP' , '', 'customPHPPathDir', NULL, 0, 0, 5, 'Path where site specific PHP code files are stored if any. This directory is searched first if set.', 0, 1, 1, NULL, @domainID, NULL),
-  (@option_group_id_directory_pref, 'Custom Extensions' , '', 'extensionsDir', NULL, 0, 0, 6, 'Path where Custom extensions are stored.', 0, 1, 1, NULL, @domainID, NULL),
-
--- URL preferences
-  (@option_group_id_url_pref, 'CiviCRM Resource URL' , '', 'userFrameworkResourceURL', NULL, 0, 0, 1, NULL, 0, 1, 1, NULL, @domainID, NULL),
-  (@option_group_id_url_pref, 'Image Upload URL' , '', 'imageUploadURL', NULL, 0, 0, 2, NULL, 0, 1, 1, NULL, @domainID, NULL),
-  (@option_group_id_url_pref, 'Custom CiviCRM CSS URL' , '', 'customCSSURL', NULL, 0, 0, 3, NULL, 0, 1, 1, NULL, @domainID, NULL),
 
 -- Mail Approval Status Preferences
   (@option_group_id_mail_approval_status, 'Approved' , 1, 'Approved', NULL, 0, 1, 1, NULL, 0, 1, 1, @mailCompId, @domainID, NULL),
@@ -18341,4 +18324,4 @@ VALUES
     ( @domainID, CONCAT('civicrm/report/instance/', @instanceID, '&reset=1'), 'Survey Report (Detail)', 'Survey Report (Detail)', 'administer CiviCampaign,manage campaign,interview campaign contacts', 'OR', @reportlastID, '1', NULL, @instanceID+2 );
 UPDATE civicrm_report_instance SET navigation_id = LAST_INSERT_ID() WHERE id = @instanceID;
 
- UPDATE civicrm_domain SET version = '4.1.alpha2';
+ UPDATE civicrm_domain SET version = '4.1.beta1';

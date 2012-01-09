@@ -94,7 +94,7 @@ class CRM_Core_Permission_WordPress {
              current_user_can('editor') ) {
             return true;
         }
-
+        
         static $otherPerms = null;
         if ( ! $otherPerms ) {
             $otherPerms = array( 'access CiviMail subscribe/unsubscribe pages' => 1,
