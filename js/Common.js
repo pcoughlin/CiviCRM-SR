@@ -781,7 +781,7 @@ window.onload = function(){
     var tmp = newwindow2.document;
     tmp.write('<html><head><title>Help Text Popup</title>');
     tmp.write('</head><body>');
-    tmp.write(cj(this).siblings("div.helpicon").find(".crm-help").html());
+    tmp.write(cj(this).children("div.helpicon").find(".crm-help").html());
     tmp.write('</body></html>');
     tmp.close(); 
   });

@@ -75,10 +75,19 @@ function smarty_function_help( $params, &$smarty ) {
     if ( ! $help ) {
         $help = $smarty->fetch( $file );
     }
+    
+    $userID = CRM_Core_BAO_UFMatch::getContactId( $user->uid );
+    $userSR = CRM_Core_BAO_Setting::getItem("User Preferences", "screen_reader", NULL, FALSE, $userID);
+    if($userSR) {
+    return <<< EOT
+<a title="{$id} Help" href="#" class="helpiconanchor">&nbsp;<div class="helpicon">&nbsp;<span id="{$id}_help" style="display:none">$help</span></div></a>&nbsp;&nbsp;&nbsp;
+EOT;
+  }else{
     return <<< EOT
 <script type="text/javascript"> cj( function() { cj(".helpicon").toolTip(); });</script>
 <div class="helpicon">&nbsp;<span id="{$id}_help" style="display:none">$help</span></div>&nbsp;&nbsp;&nbsp;
 EOT;
+    }
 }
 
 

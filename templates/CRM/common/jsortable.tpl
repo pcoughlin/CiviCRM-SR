@@ -75,7 +75,14 @@ eval('tableId =[' + tableId + ']');
                     sortColumn += '[' + count + ', "asc" ],';
                 }
                 sortId   = getRowId(tdObject, cj(this).attr('id') +' hiddenElement' ); 
-                columns += '{ "sType": \'' + stype + '\', "fnRender": function (oObj) { return oObj.aData[' + sortId + ']; },"bUseRendered": false},';
+
+	        $userID = CRM_Core_BAO_UFMatch::getContactId( $user->uid );
+	        $userSR = CRM_Core_BAO_Setting::getItem("User Preferences", "screen_reader", NULL, FALSE, $userID);
+                if ($userSR) {
+                    columns += '{"sType": "html"},';
+                } else {
+                    columns += '{ "sType": \'' + stype + '\', "fnRender": function (oObj) { return oObj.aData[' + sortId + ']; },"bUseRendered": false},';
+                };
             break;
             case 'nosort':           
                 columns += '{ "bSortable": false, "sClass": "'+ getElementClass( this ) +'"},';
@@ -225,3 +232,4 @@ cj.fn.dataTableExt.oSort['currency-desc'] = function(a,b) {
 };
 </script>
 {/literal}
+
